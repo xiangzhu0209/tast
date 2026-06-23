@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>窗簾計價特訓系統</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background-color: #f4f7f6; color: #333; max-width: 600px; margin: 0 auto; line-height: 1.6; }
+        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h1 { font-size: 24px; color: #2c3e50; text-align: center; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
+        .stats { display: flex; justify-content: space-between; font-weight: bold; font-size: 16px; margin-bottom: 20px; }
+        .q-num { color: #3498db; }
+        .score-board { color: #7f8c8d; }
+        .score-correct { color: #2ecc71; margin-right: 10px;}
+        .score-wrong { color: #e74c3c; }
+        .question-box { background: #e8f4f8; padding: 15px; border-radius: 8px; font-size: 18px; margin-bottom: 20px; font-weight: bold; }
+        input[type="number"] { width: 100%; padding: 12px; font-size: 18px; border: 2px solid #bdc3c7; border-radius: 6px; margin-bottom: 15px; box-sizing: border-box; }
+        button { width: 100%; padding: 15px; font-size: 18px; color: white; background-color: #3498db; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; margin-bottom: 10px; transition: 0.3s; }
+        button:hover { background-color: #2980b9; }
+        .btn-next { background-color: #2ecc71; display: none; }
+        .btn-next:hover { background-color: #27ae60; }
+        .result { padding: 15px; border-radius: 8px; margin-top: 15px; display: none; font-size: 16px; white-space: pre-line; }
+        .correct { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .wrong { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h1>窗簾計價特訓系統</h1>
+    <div class="stats">
+        <span id="q-num" class="q-num">第 1 題</span>
+        <span class="score-board">
+            <span id="score-correct" class="score-correct">完美答對: 0</span>
+            <span id="score-wrong" class="score-wrong">答錯: 0</span>
+        </span>
+    </div>
+    
+    <div class="question-box" id="question-text">載入題目中...</div>
+    
+    <input type="number" id="user-answer" placeholder="請輸入最終總價 (數字)" />
+    
+    <button id="submit-btn" onclick="checkAnswer()">送出答案</button>
+    <button id="next-btn" class="btn-next" onclick="generateQuestion()">下一題</button>
+    
+    <div id="result-box" class="result"></div>
+</div>
+
+<script>
+    let currentQ = {};
+    let qCount = 0;
+    let firstTryCorrectCount = 0; // 記錄第一次就答對的題數
+    let wrongCount = 0;           // 記錄第一次就答錯的題數
+    let attemptCount = 0;         // 記錄「當前這題」嘗試了幾次
+
+    function getRandom10(min, max) {
+        return Math.floor(Math.random() * ((max - min) / 10 + 1)) * 10 + min;
+    }
+
+    function getRandomItem(arr) {
+        return arr[Math.floor(Math.random() * arr.length)];
+    }
+
+    function generateQuestion() {
+        qCount++;
+        attemptCount = 0; // 每題開始前歸零嘗試次數
+        
+        document.getElementById('q-num').innerText = `第 ${qCount} 題`;
+        document.getElementById('user-answer').value = '';
+        document.getElementById('user-answer').disabled = false;
+        document.getElementById('submit-btn').style.display = 'block';
+        document.getElementById('next-btn').style.display = 'none';
+        document.getElementById('result-box').style.display = 'none';
+
+        const types = ['捲簾', '調光簾', '木百葉', '風琴簾', '穿透簾', '拉門', '五尺折景簾', '五尺蛇簾', '九尺折景簾', '九尺蛇簾'];
+        const type = getRandomItem(types);
+        const w = Math.floor(Math.random() * (380 - 60 + 1)) + 60;
+        const h = Math.floor(Math.random() * (265 - 90 + 1)) + 90;
+        
+        let unitPrice = 0;
+        let trackPrice = 0;
+        let multi = 0;
+
+        if (type === '捲簾') unitPrice = getRandom10(110, 150);
+        else if (type === '調光簾') unitPrice = getRandom10(100, 350);
+        else if (type === '木百葉') unitPrice = getRandom10(280, 400);
+        else if (type === '風琴簾') unitPrice = getRandom10(240, 480);
+        else if (type === '穿透簾') unitPrice = getRandom10(250, 480);
+        else if (type === '拉門') unitPrice = 100;
+        else if (type.includes('五尺')) unitPrice = getRandom10(100, 250);
+        else if (type.includes('九尺')) unitPrice = getRandom10(280, 450);
+
+        if (type.includes('折景')) {
+            multi = getRandomItem([2.0, 2.1, 2.2, 2.3, 2.4, 2.5]);
+            trackPrice = 60;
+        } else if (type.includes('蛇簾')) {
+            multi = getRandomItem([2.7, 2.8, 2.9, 3.0, 3.1, 3.2, 3.3]);
+            trackPrice = 130;
+        }
+
+        // Logic Calculation
+        const w_ft = Math.ceil((w / 30.3) * 10) / 10;
+        const h_ft = Math.ceil((h / 30.3) * 10) / 10;
+        let total = 0;
+        let processText = `【尺寸轉換】\n寬: ${w}cm ➔ ${w_ft}尺\n高: ${h}cm ➔ ${h_ft}尺\n\n`;
+
+        if (['捲簾', '調光簾', '木百葉', '風琴簾', '穿透簾'].includes(type)) {
+            let area = Math.ceil(w_ft * h_ft);
+            let minArea = (type === '穿透簾') ? 35 : 15;
+            let finalArea = Math.max(area, minArea);
+            total = finalArea * unitPrice;
+            processText += `【才數計算】\n${w_ft} × ${h_ft} = ${area}才 (進位後)\n防呆門檻: ${minArea}才\n計價才數: ${finalArea}才\n總價: ${finalArea} × ${unitPrice} = ${total}元`;
+        } 
+        else if (type === '拉門') {
+            let h_door = Math.ceil(h_ft);
+            let area = Math.ceil(w_ft * h_door);
+            let finalArea = Math.max(area, 20);
+            total = finalArea * unitPrice;
+            processText += `【高度陷阱】\n高 ${h_ft}尺 ➔ 進位至 ${h_door}尺\n【才數計算】\n${w_ft} × ${h_door} = ${area}才 (進位後)\n防呆門檻: 20才\n計價才數: ${finalArea}才\n總價: ${finalArea} × ${unitPrice} = ${total}元`;
+        }
+        else {
+            let track_ft = Math.max(5, Math.ceil(w_ft));
+            let totalTrack = track_ft * trackPrice;
+            processText += `【軌道計算】\n長度進位: ${Math.ceil(w_ft)}尺 (低消5尺)\n計價軌道: ${track_ft}尺\n軌道價: ${track_ft} × ${trackPrice} = ${totalTrack}元\n\n`;
+
+            if (type.includes('五尺')) {
+                let panels = Math.ceil((w_ft * multi) / 5);
+                let h_fab = Math.ceil(h_ft) + 1;
+                let totalFab = Math.ceil(panels * h_fab);
+                let totalFabPrice = totalFab * unitPrice;
+                total = totalFabPrice + totalTrack;
+                processText += `【布料計算 (五尺)】\n幅數: (${w_ft} × ${multi}) ÷ 5 ➔ 進位 ${panels}幅\n高度: ${Math.ceil(h_ft)} + 1(損耗) = ${h_fab}尺\n總尺數: ${panels} × ${h_fab} = ${totalFab}尺 (進位後)\n布價: ${totalFab} × ${unitPrice} = ${totalFabPrice}元\n最終總價: 布 ${totalFabPrice} + 軌 ${totalTrack} = ${total}元`;
+            } else if (type.includes('九尺')) {
+                let totalFab = Math.ceil(w_ft * multi);
+                let effectivePrice = (h > 250) ? unitPrice + 30 : unitPrice;
+                let totalFabPrice = totalFab * effectivePrice;
+                total = totalFabPrice + totalTrack;
+                let h_warning = (h > 250) ? `⚠️高度超過250，單價加30➔ ${effectivePrice}元\n` : `單價維持: ${effectivePrice}元\n`;
+                processText += `【布料計算 (九尺)】\n總尺數: ${w_ft} × ${multi} ➔ 進位 ${totalFab}尺\n${h_warning}布價: ${totalFab} × ${effectivePrice} = ${totalFabPrice}元\n最終總價: 布 ${totalFabPrice} + 軌 ${totalTrack} = ${total}元`;
+            }
+        }
+
+        currentQ = { total: total, explanation: processText };
+
+        let qText = `尺寸: 寬 ${w} cm × 高 ${h} cm<br>產品: ${type}<br>單價: ${unitPrice}`;
+        if (multi > 0) qText += `<br>倍數: ${multi}倍 (軌道單價: ${trackPrice})`;
+        
+        document.getElementById('question-text').innerHTML = qText;
+    }
+
+    function checkAnswer() {
+        const userAns = parseInt(document.getElementById('user-answer').value);
+        if (isNaN(userAns)) return alert("請輸入數字！");
+
+        attemptCount++; // 增加這題的嘗試次數
+        const resBox = document.getElementById('result-box');
+        resBox.style.display = 'block';
+
+        // 核心邏輯：只有第一次提交會影響右上角的成績面板
+        if (attemptCount === 1) {
+            if (userAns === currentQ.total) {
+                firstTryCorrectCount++;
+                document.getElementById('score-correct').innerText = `完美答對: ${firstTryCorrectCount}`;
+            } else {
+                wrongCount++;
+                document.getElementById('score-wrong').innerText = `答錯: ${wrongCount}`;
+            }
+        }
+
+        if (userAns === currentQ.total) {
+            resBox.className = 'result correct';
+            if (attemptCount === 1) {
+                resBox.innerText = `✅ 太神啦！一次就完美答對！\n\n` + currentQ.explanation;
+            } else {
+                resBox.innerText = `✅ 終於答對了！\n\n但這題已經被記為錯誤囉，下次報價前要更小心：\n\n` + currentQ.explanation;
+            }
+            
+            document.getElementById('submit-btn').style.display = 'none';
+            document.getElementById('next-btn').style.display = 'block';
+            document.getElementById('user-answer').disabled = true;
+        } else {
+            resBox.className = 'result wrong';
+            if (attemptCount < 3) {
+                resBox.innerText = `❌ 答錯了！(已計入錯誤題數)\n這是第 ${attemptCount} 次算錯，請再檢查一下進位、損耗或防呆門檻喔！`;
+                document.getElementById('user-answer').value = ''; // 清空讓他重填
+                document.getElementById('user-answer').focus();
+            } else {
+                resBox.innerText = `❌ 已經算錯 3 次囉！這題比較陷阱，看看標準算式：\n\n正確答案: ${currentQ.total}\n\n` + currentQ.explanation;
+                document.getElementById('submit-btn').style.display = 'none';
+                document.getElementById('next-btn').style.display = 'block';
+                document.getElementById('user-answer').disabled = true;
+            }
+        }
+    }
+
+    // 啟動第一題
+    window.onload = generateQuestion;
+</script>
+
+</body>
+</html>
