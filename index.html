@@ -8,31 +8,48 @@
     <style>
         /* 基礎設定與重置 */
         * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+        
+        /* 手機優先：預設滿版無留白 */
         body { 
             font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
-            padding: 15px 10px; 
-            background-color: #e2e8f0; /* 更柔和的背景色 */
+            padding: 0; 
+            margin: 0; 
+            background-color: #ffffff; /* 手機版直接全白底 */
             color: #1e293b; 
-            max-width: 600px; 
-            margin: 0 auto; 
             line-height: 1.6; 
         }
         
-        /* 卡片主體 */
+        /* 卡片主體 (手機滿版) */
         .card { 
             background: white; 
-            padding: 25px 20px; 
-            border-radius: 24px; /* 更圓潤的邊角 */
-            box-shadow: 0 10px 25px rgba(0,0,0,0.08); 
+            padding: 20px 15px; 
+            max-width: 600px; 
+            margin: 0 auto; 
+            min-height: 100vh; /* 確保高度滿版 */
+            display: flex;
+            flex-direction: column;
+            border-radius: 0;
+            box-shadow: none;
+        }
+        
+        /* 大螢幕時才恢復成懸浮卡片 */
+        @media (min-width: 600px) {
+            body { padding: 20px; background-color: #e2e8f0; }
+            .card { 
+                min-height: auto; 
+                border-radius: 24px; 
+                box-shadow: 0 10px 25px rgba(0,0,0,0.08); 
+                padding: 30px 25px; 
+            }
         }
         
         h1 { 
-            font-size: 22px; 
+            font-size: 24px; 
             color: #0f172a; 
             text-align: center; 
             border-bottom: 2px solid #f1f5f9; 
             padding-bottom: 15px; 
-            margin-top: 0; 
+            margin-top: 5px; 
             font-weight: 800;
         }
         
@@ -50,13 +67,13 @@
         .score-correct { color: #10b981; }
         .score-wrong { color: #ef4444; }
         
-        /* 題目框優化 */
+        /* 題目框 */
         .question-box { 
             background: #f8fafc; 
             border-left: 6px solid #3b82f6; 
             padding: 20px; 
             border-radius: 12px; 
-            font-size: 19px; 
+            font-size: 20px; 
             margin-bottom: 20px; 
             font-weight: 700; 
             color: #1e293b;
@@ -64,16 +81,16 @@
             box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
         }
         
-        /* 輸入框優化 */
+        /* 輸入框 */
         input[type="text"], input[type="number"] { 
             width: 100%; 
-            padding: 15px; 
-            font-size: 28px; 
+            padding: 18px 15px; 
+            font-size: 30px; 
             color: #0f172a;
             background-color: #ffffff;
             border: 2px solid #cbd5e1; 
             border-radius: 16px; 
-            margin-bottom: 20px; 
+            margin-bottom: 25px; 
             text-align: center; 
             font-weight: 900; 
             letter-spacing: 1px;
@@ -82,13 +99,13 @@
             outline: none; 
             transition: 0.2s;
         }
-        input::placeholder { color: #94a3b8; font-size: 16px; font-weight: normal; letter-spacing: normal; }
+        input::placeholder { color: #94a3b8; font-size: 18px; font-weight: normal; letter-spacing: normal; }
         
-        /* 按鈕共用設定 */
+        /* 按鈕共用 */
         button { 
             width: 100%; 
-            padding: 16px; 
-            font-size: 18px; 
+            padding: 18px; 
+            font-size: 20px; 
             color: white; 
             border: none; 
             border-radius: 16px; 
@@ -100,32 +117,32 @@
         }
         button:active { transform: scale(0.97); }
         
-        /* 主要送出按鈕 */
+        /* 主要按鈕 */
         #submit-btn {
             background: linear-gradient(135deg, #3b82f6, #2563eb);
             box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
-            font-size: 20px;
+            margin-top: 10px;
         }
         
-        /* 結束測驗按鈕 */
+        /* 結束按鈕 */
         .btn-report { 
             background: linear-gradient(135deg, #8b5cf6, #7c3aed); 
             box-shadow: 0 4px 15px rgba(124, 58, 237, 0.3);
-            margin-top: 10px; 
+            margin-top: auto; /* 讓結束按鈕自動推到最底部 */
         }
         
-        /* 數字鍵盤優化 (大按鈕、高對比) */
+        /* 滿版數字鍵盤 (按鈕加高) */
         .numpad { 
             display: grid; 
             grid-template-columns: repeat(3, 1fr); 
             gap: 12px; 
-            margin-bottom: 25px; 
+            margin-bottom: 10px; 
         }
         .numpad button { 
             margin-bottom: 0; 
-            height: 70px; /* 加高讓大拇指更好按 */
+            height: 75px; 
             padding: 0; 
-            font-size: 26px; 
+            font-size: 28px; 
             font-weight: 800;
             background-color: #f1f5f9; 
             color: #334155; 
@@ -138,7 +155,6 @@
             transform: translateY(5px); 
             background-color: #e2e8f0;
         }
-        /* 退格與清除鍵 */
         .numpad .numpad-action { 
             background-color: #ef4444; 
             color: white; 
@@ -155,7 +171,7 @@
         }
         .numpad .numpad-clear:active { background-color: #ea580c; }
         
-        /* 提示結果框 */
+        /* 提示結果 */
         .result { 
             padding: 18px; 
             border-radius: 12px; 
@@ -187,7 +203,7 @@
 <body>
 
 <div class="card" id="login-screen">
-    <h1>歐昇特訓系統</h1>
+    <h1 style="margin-top: 30px;">歐昇特訓系統</h1>
     <p style="text-align: center; color: #64748b; font-weight: bold; font-size: 16px; margin-bottom: 20px;">請輸入您的姓名以開始測驗</p>
     <input type="text" id="employee-name" placeholder="請輸入姓名 (例如: 湘筑)" />
     <button onclick="startQuiz()" id="submit-btn">🚀 開始特訓</button>
@@ -231,7 +247,7 @@
 </div>
 
 <div class="card" id="report-screen">
-    <h1>結果戰報</h1>
+    <h1 style="margin-top: 20px;">結果戰報</h1>
     <p style="text-align: center; font-weight: bold; color: #ef4444; margin-bottom: 20px;">請點擊下方按鈕複製，並回傳給湘筑</p>
     <div class="report-box" id="report-text"></div>
     <button onclick="copyReport()" style="background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);">📋 複製戰報 (回報 LINE)</button>
