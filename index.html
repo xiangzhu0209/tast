@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     
+    <!-- 蘋果 iOS 專屬：宣告為全螢幕 Web App -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="歐昇特訓">
@@ -14,52 +15,42 @@
         /* 基礎設定與重置 */
         * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
         
-        /* 針對 iOS 滿版高度的完美解法 */
+        /* 強制 100% 滿版，完全阻絕灰色背景 */
         html, body {
+            width: 100vw;
             height: 100%;
-            height: -webkit-fill-available; /* 讓 iOS 忽略底部網址列的高度計算 */
-            margin: 0;
-            padding: 0;
-            background-color: #ffffff; /* 手機版直接全白底 */
+            height: -webkit-fill-available;
+            margin: 0 !important;
+            padding: 0 !important;
+            background-color: #ffffff !important;
             color: #1e293b; 
             font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
-            line-height: 1.6; 
-            overflow: hidden; /* 防止整個網頁亂彈性滾動 */
+            overflow: hidden; 
         }
         
-        /* 卡片主體 (手機滿版) */
+        /* 卡片主體強制全螢幕 */
         .card { 
-            background: white; 
-            /* 使用 env(safe-area-inset-*) 自動閃避 iPhone 瀏海與底部橫條 */
-            padding: calc(15px + env(safe-area-inset-top)) 15px calc(20px + env(safe-area-inset-bottom)) 15px; 
-            width: 100%;
-            height: 100%;
-            overflow-y: auto; /* 內容太多時只在卡片內滾動 */
+            background: white !important; 
+            /* 自動閃避 iPhone 瀏海與底部橫條 */
+            padding: calc(20px + env(safe-area-inset-top)) 20px calc(20px + env(safe-area-inset-bottom)) 20px !important; 
+            width: 100% !important;
+            height: 100% !important;
+            max-width: none !important;
+            border-radius: 0 !important;
+            box-shadow: none !important;
+            margin: 0 !important;
+            overflow-y: auto; 
             display: flex;
             flex-direction: column;
         }
         
-        /* 大螢幕時才恢復成懸浮卡片 */
-        @media (min-width: 600px) {
-            body { padding: 20px; background-color: #e2e8f0; overflow: auto; height: auto; }
-            .card { 
-                max-width: 600px;
-                margin: 0 auto;
-                height: auto; 
-                min-height: calc(100vh - 40px);
-                border-radius: 24px; 
-                box-shadow: 0 10px 25px rgba(0,0,0,0.08); 
-                padding: 30px 25px; 
-            }
-        }
-        
         h1 { 
-            font-size: 24px; 
+            font-size: 26px; 
             color: #0f172a; 
             text-align: center; 
             border-bottom: 2px solid #f1f5f9; 
             padding-bottom: 15px; 
-            margin-top: 5px; 
+            margin-top: 10px; 
             font-weight: 800;
         }
         
@@ -68,11 +59,10 @@
             display: flex; 
             justify-content: space-between; 
             font-weight: bold; 
-            font-size: 16px; 
+            font-size: 18px; 
             margin-bottom: 20px; 
-            padding: 0 5px;
         }
-        .q-num { color: #3b82f6; background: #eff6ff; padding: 4px 12px; border-radius: 20px; }
+        .q-num { color: #3b82f6; background: #eff6ff; padding: 4px 14px; border-radius: 20px; }
         .score-board { color: #64748b; display: flex; align-items: center; gap: 10px;}
         .score-correct { color: #10b981; }
         .score-wrong { color: #ef4444; }
@@ -83,39 +73,37 @@
             border-left: 6px solid #3b82f6; 
             padding: 20px; 
             border-radius: 12px; 
-            font-size: 20px; 
-            margin-bottom: 20px; 
+            font-size: 22px; 
+            margin-bottom: 25px; 
             font-weight: 700; 
             color: #1e293b;
             line-height: 1.7;
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
         }
         
         /* 輸入框 */
         input[type="text"], input[type="number"] { 
             width: 100%; 
-            padding: 18px 15px; 
-            font-size: 30px; 
+            padding: 20px; 
+            font-size: 32px; 
             color: #0f172a;
             background-color: #ffffff;
             border: 2px solid #cbd5e1; 
             border-radius: 16px; 
-            margin-bottom: 20px; /* 稍微縮小間距留給鍵盤 */
+            margin-bottom: 25px; 
             text-align: center; 
             font-weight: 900; 
             letter-spacing: 1px;
             user-select: none; 
             -webkit-user-select: none; 
             outline: none; 
-            transition: 0.2s;
         }
         input::placeholder { color: #94a3b8; font-size: 18px; font-weight: normal; letter-spacing: normal; }
         
         /* 按鈕共用 */
         button { 
             width: 100%; 
-            padding: 18px; 
-            font-size: 20px; 
+            padding: 20px; 
+            font-size: 22px; 
             color: white; 
             border: none; 
             border-radius: 16px; 
@@ -123,7 +111,6 @@
             font-weight: bold; 
             margin-bottom: 12px; 
             touch-action: manipulation; 
-            transition: all 0.15s ease;
         }
         button:active { transform: scale(0.97); }
         
@@ -131,32 +118,32 @@
         #submit-btn {
             background: linear-gradient(135deg, #3b82f6, #2563eb);
             box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
-            margin-top: 5px;
+            margin-top: 10px;
         }
         
         /* 結束按鈕 */
         .btn-report { 
             background: linear-gradient(135deg, #8b5cf6, #7c3aed); 
             box-shadow: 0 4px 15px rgba(124, 58, 237, 0.3);
-            margin-top: auto; /* 讓結束按鈕自動推到最底部 */
+            margin-top: auto; 
         }
         
         /* 滿版數字鍵盤 */
         .numpad { 
             display: grid; 
             grid-template-columns: repeat(3, 1fr); 
-            gap: 12px; 
+            gap: 15px; 
             margin-bottom: 15px; 
         }
         .numpad button { 
             margin-bottom: 0; 
-            height: 75px; 
+            height: 80px; 
             padding: 0; 
-            font-size: 28px; 
+            font-size: 30px; 
             font-weight: 800;
             background-color: #f1f5f9; 
             color: #334155; 
-            border-radius: 14px; 
+            border-radius: 16px; 
             box-shadow: 0 5px 0 #cbd5e1; 
             border: 1px solid #e2e8f0; 
         }
@@ -165,21 +152,8 @@
             transform: translateY(5px); 
             background-color: #e2e8f0;
         }
-        .numpad .numpad-action { 
-            background-color: #ef4444; 
-            color: white; 
-            box-shadow: 0 5px 0 #b91c1c; 
-            border: none; 
-        }
-        .numpad .numpad-action:active { background-color: #dc2626; }
-        
-        .numpad .numpad-clear { 
-            background-color: #f59e0b; 
-            color: white; 
-            box-shadow: 0 5px 0 #d97706; 
-            border: none; 
-        }
-        .numpad .numpad-clear:active { background-color: #ea580c; }
+        .numpad .numpad-action { background-color: #ef4444; color: white; box-shadow: 0 5px 0 #b91c1c; border: none; }
+        .numpad .numpad-clear { background-color: #f59e0b; color: white; box-shadow: 0 5px 0 #d97706; border: none; }
         
         /* 提示結果 */
         .result { 
@@ -187,7 +161,7 @@
             border-radius: 12px; 
             margin-top: 15px; 
             display: none; 
-            font-size: 16px; 
+            font-size: 18px; 
             white-space: pre-line; 
             line-height: 1.6; 
             font-weight: bold;
@@ -202,7 +176,7 @@
             padding: 20px; 
             border-radius: 12px; 
             font-family: monospace; 
-            font-size: 15px; 
+            font-size: 16px; 
             white-space: pre-wrap; 
             margin-bottom: 20px; 
             line-height: 1.8; 
@@ -213,8 +187,8 @@
 <body>
 
 <div class="card" id="login-screen">
-    <h1 style="margin-top: 10vh;">歐昇特訓系統</h1>
-    <p style="text-align: center; color: #64748b; font-weight: bold; font-size: 16px; margin-bottom: 20px;">請輸入您的姓名以開始測驗</p>
+    <h1 style="margin-top: 15vh;">歐昇特訓系統</h1>
+    <p style="text-align: center; color: #64748b; font-weight: bold; font-size: 18px; margin-bottom: 25px;">請輸入您的姓名以開始測驗</p>
     <input type="text" id="employee-name" placeholder="請輸入姓名 (例如: 湘筑)" />
     <button onclick="startQuiz()" id="submit-btn">🚀 開始特訓</button>
 </div>
@@ -261,7 +235,7 @@
     <p style="text-align: center; font-weight: bold; color: #ef4444; margin-bottom: 20px;">請點擊下方按鈕複製，並回傳給湘筑</p>
     <div class="report-box" id="report-text"></div>
     <button onclick="copyReport()" style="background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);">📋 複製戰報 (回報 LINE)</button>
-    <button onclick="location.reload()" style="background: #94a3b8; margin-top: 12px; box-shadow: 0 4px 15px rgba(148, 163, 184, 0.3);">重新開始</button>
+    <button onclick="location.reload()" style="background: #94a3b8; margin-top: 15px; box-shadow: 0 4px 15px rgba(148, 163, 184, 0.3);">重新開始</button>
 </div>
 
 <script>
@@ -310,7 +284,7 @@
         startTime = new Date(); 
         
         document.getElementById('login-screen').style.display = 'none';
-        document.getElementById('quiz-screen').style.display = 'flex'; // 維持 flex 排版
+        document.getElementById('quiz-screen').style.display = 'flex'; 
         generateQuestion();
     }
 
@@ -430,7 +404,7 @@
 
         currentQ = { total: total, explanation: processText };
 
-        if (multi > 0) qText += `<br><span style="color: #64748b; font-size: 16px;">倍數: ${multi}倍 (軌道: ${trackPrice})</span>`;
+        if (multi > 0) qText += `<br><span style="color: #64748b; font-size: 18px;">倍數: ${multi}倍 (軌道: ${trackPrice})</span>`;
         
         document.getElementById('question-text').innerHTML = qText;
     }
@@ -442,7 +416,6 @@
         attemptCount++; 
         const resBox = document.getElementById('result-box');
         resBox.style.display = 'block';
-        // 讓畫面往下滾動到結果
         setTimeout(() => resBox.scrollIntoView({ behavior: 'smooth' }), 50);
 
         if (attemptCount === 1) {
@@ -535,7 +508,7 @@
                        `※ 系統自動結算，請提交給湘筑。`;
 
         document.getElementById('quiz-screen').style.display = 'none';
-        document.getElementById('report-screen').style.display = 'flex'; // 維持 flex 排版
+        document.getElementById('report-screen').style.display = 'flex'; 
         document.getElementById('report-text').innerText = report;
     }
 
