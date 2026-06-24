@@ -6,53 +6,191 @@
     <title>窗簾計價特訓系統</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
-        /* 移除手機端點擊的預設灰色高光 */
-        * { -webkit-tap-highlight-color: transparent; }
+        /* 基礎設定與重置 */
+        * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+        body { 
+            font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+            padding: 15px 10px; 
+            background-color: #e2e8f0; /* 更柔和的背景色 */
+            color: #1e293b; 
+            max-width: 600px; 
+            margin: 0 auto; 
+            line-height: 1.6; 
+        }
         
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 15px; background-color: #f4f7f6; color: #333; max-width: 600px; margin: 0 auto; line-height: 1.6; }
-        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        h1 { font-size: 22px; color: #2c3e50; text-align: center; border-bottom: 2px solid #3498db; padding-bottom: 10px; margin-top: 0; }
-        .stats { display: flex; justify-content: space-between; font-weight: bold; font-size: 15px; margin-bottom: 15px; }
-        .q-num { color: #3498db; }
-        .score-board { color: #7f8c8d; }
-        .score-correct { color: #2ecc71; margin-right: 8px;}
-        .score-wrong { color: #e74c3c; }
+        /* 卡片主體 */
+        .card { 
+            background: white; 
+            padding: 25px 20px; 
+            border-radius: 24px; /* 更圓潤的邊角 */
+            box-shadow: 0 10px 25px rgba(0,0,0,0.08); 
+        }
+        
+        h1 { 
+            font-size: 22px; 
+            color: #0f172a; 
+            text-align: center; 
+            border-bottom: 2px solid #f1f5f9; 
+            padding-bottom: 15px; 
+            margin-top: 0; 
+            font-weight: 800;
+        }
+        
+        /* 狀態列 */
+        .stats { 
+            display: flex; 
+            justify-content: space-between; 
+            font-weight: bold; 
+            font-size: 16px; 
+            margin-bottom: 20px; 
+            padding: 0 5px;
+        }
+        .q-num { color: #3b82f6; background: #eff6ff; padding: 4px 12px; border-radius: 20px; }
+        .score-board { color: #64748b; display: flex; align-items: center; gap: 10px;}
+        .score-correct { color: #10b981; }
+        .score-wrong { color: #ef4444; }
         
         /* 題目框優化 */
-        .question-box { background: #e8f4f8; padding: 15px; border-radius: 8px; font-size: 17px; margin-bottom: 15px; font-weight: bold; line-height: 1.5; }
+        .question-box { 
+            background: #f8fafc; 
+            border-left: 6px solid #3b82f6; 
+            padding: 20px; 
+            border-radius: 12px; 
+            font-size: 19px; 
+            margin-bottom: 20px; 
+            font-weight: 700; 
+            color: #1e293b;
+            line-height: 1.7;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+        }
         
-        /* 輸入框防選取優化 */
-        input[type="text"], input[type="number"] { width: 100%; padding: 12px; font-size: 20px; border: 2px solid #bdc3c7; border-radius: 6px; margin-bottom: 15px; box-sizing: border-box; text-align: center; font-weight: bold; user-select: none; -webkit-user-select: none; outline: none; }
+        /* 輸入框優化 */
+        input[type="text"], input[type="number"] { 
+            width: 100%; 
+            padding: 15px; 
+            font-size: 28px; 
+            color: #0f172a;
+            background-color: #ffffff;
+            border: 2px solid #cbd5e1; 
+            border-radius: 16px; 
+            margin-bottom: 20px; 
+            text-align: center; 
+            font-weight: 900; 
+            letter-spacing: 1px;
+            user-select: none; 
+            -webkit-user-select: none; 
+            outline: none; 
+            transition: 0.2s;
+        }
+        input::placeholder { color: #94a3b8; font-size: 16px; font-weight: normal; letter-spacing: normal; }
         
-        /* 按鈕加入 touch-action: manipulation 防止雙擊延遲 */
-        button { width: 100%; padding: 15px; font-size: 18px; color: white; background-color: #3498db; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; margin-bottom: 10px; transition: 0.2s; touch-action: manipulation; }
-        button:active { background-color: #2980b9; transform: scale(0.98); }
+        /* 按鈕共用設定 */
+        button { 
+            width: 100%; 
+            padding: 16px; 
+            font-size: 18px; 
+            color: white; 
+            border: none; 
+            border-radius: 16px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            margin-bottom: 12px; 
+            touch-action: manipulation; 
+            transition: all 0.15s ease;
+        }
+        button:active { transform: scale(0.97); }
         
-        .btn-next { background-color: #2ecc71; display: none; }
-        .btn-report { background-color: #9b59b6; margin-top: 15px; }
+        /* 主要送出按鈕 */
+        #submit-btn {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
+            font-size: 20px;
+        }
         
-        .result { padding: 15px; border-radius: 8px; margin-top: 10px; display: none; font-size: 15px; white-space: pre-line; line-height: 1.5; }
-        .correct { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
-        .wrong { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        /* 結束測驗按鈕 */
+        .btn-report { 
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed); 
+            box-shadow: 0 4px 15px rgba(124, 58, 237, 0.3);
+            margin-top: 10px; 
+        }
+        
+        /* 數字鍵盤優化 (大按鈕、高對比) */
+        .numpad { 
+            display: grid; 
+            grid-template-columns: repeat(3, 1fr); 
+            gap: 12px; 
+            margin-bottom: 25px; 
+        }
+        .numpad button { 
+            margin-bottom: 0; 
+            height: 70px; /* 加高讓大拇指更好按 */
+            padding: 0; 
+            font-size: 26px; 
+            font-weight: 800;
+            background-color: #f1f5f9; 
+            color: #334155; 
+            border-radius: 14px; 
+            box-shadow: 0 5px 0 #cbd5e1; 
+            border: 1px solid #e2e8f0; 
+        }
+        .numpad button:active { 
+            box-shadow: 0 0 0 transparent; 
+            transform: translateY(5px); 
+            background-color: #e2e8f0;
+        }
+        /* 退格與清除鍵 */
+        .numpad .numpad-action { 
+            background-color: #ef4444; 
+            color: white; 
+            box-shadow: 0 5px 0 #b91c1c; 
+            border: none; 
+        }
+        .numpad .numpad-action:active { background-color: #dc2626; }
+        
+        .numpad .numpad-clear { 
+            background-color: #f59e0b; 
+            color: white; 
+            box-shadow: 0 5px 0 #d97706; 
+            border: none; 
+        }
+        .numpad .numpad-clear:active { background-color: #ea580c; }
+        
+        /* 提示結果框 */
+        .result { 
+            padding: 18px; 
+            border-radius: 12px; 
+            margin-top: 15px; 
+            display: none; 
+            font-size: 16px; 
+            white-space: pre-line; 
+            line-height: 1.6; 
+            font-weight: bold;
+        }
+        .correct { background-color: #d1fae5; color: #065f46; border: 2px solid #a7f3d0; }
+        .wrong { background-color: #fee2e2; color: #991b1b; border: 2px solid #fecaca; }
         
         #quiz-screen, #report-screen { display: none; }
-        .report-box { background: #34495e; color: white; padding: 15px; border-radius: 8px; font-family: monospace; font-size: 14px; white-space: pre-wrap; margin-bottom: 15px; line-height: 1.8; }
-
-        /* 數字鍵盤優化，按鈕稍微加高方便點擊 */
-        .numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 15px; }
-        .numpad button { margin-bottom: 0; padding: 18px 0; font-size: 24px; background-color: #ecf0f1; color: #2c3e50; border-radius: 8px; box-shadow: 0 4px 0 #bdc3c7; border: 1px solid #d5dbdb; }
-        .numpad button:active { box-shadow: 0 0 0 #bdc3c7; transform: translateY(4px); }
-        .numpad .numpad-action { background-color: #e74c3c; color: white; box-shadow: 0 4px 0 #c0392b; border: none; }
-        .numpad .numpad-clear { background-color: #f39c12; color: white; box-shadow: 0 4px 0 #d68910; border: none; }
+        .report-box { 
+            background: #1e293b; 
+            color: #f8fafc; 
+            padding: 20px; 
+            border-radius: 12px; 
+            font-family: monospace; 
+            font-size: 15px; 
+            white-space: pre-wrap; 
+            margin-bottom: 20px; 
+            line-height: 1.8; 
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.5);
+        }
     </style>
 </head>
 <body>
 
 <div class="card" id="login-screen">
     <h1>歐昇特訓系統</h1>
-    <p style="text-align: center; color: #7f8c8d; font-weight: bold; font-size: 15px;">請輸入您的姓名以開始測驗</p>
+    <p style="text-align: center; color: #64748b; font-weight: bold; font-size: 16px; margin-bottom: 20px;">請輸入您的姓名以開始測驗</p>
     <input type="text" id="employee-name" placeholder="請輸入姓名 (例如: 湘筑)" />
-    <button onclick="startQuiz()">開始特訓</button>
+    <button onclick="startQuiz()" id="submit-btn">🚀 開始特訓</button>
 </div>
 
 <div class="card" id="quiz-screen">
@@ -67,7 +205,7 @@
     
     <div class="question-box" id="question-text">載入題目中...</div>
     
-    <input type="text" id="user-answer" readonly placeholder="請使用下方鍵盤輸入" />
+    <input type="text" id="user-answer" readonly placeholder="請點擊下方數字鍵盤" />
     
     <div id="numpad-container" class="numpad">
         <button onclick="numpadPress('1')">1</button>
@@ -86,18 +224,18 @@
     
     <button id="submit-btn" onclick="checkAnswer()">送出答案</button>
     
-    <hr style="border: 1px solid #eee; margin: 15px 0;">
-    <button class="btn-report" onclick="finishQuiz()">結束測驗 & 產出報告</button>
+    <hr style="border: none; border-top: 2px dashed #e2e8f0; margin: 20px 0;">
+    <button class="btn-report" onclick="finishQuiz()">📊 結束測驗 & 產出報告</button>
     
     <div id="result-box" class="result"></div>
 </div>
 
 <div class="card" id="report-screen">
     <h1>結果戰報</h1>
-    <p style="text-align: center; font-weight: bold; color: #e74c3c;">請點擊下方按鈕複製，並回傳給湘筑</p>
+    <p style="text-align: center; font-weight: bold; color: #ef4444; margin-bottom: 20px;">請點擊下方按鈕複製，並回傳給湘筑</p>
     <div class="report-box" id="report-text"></div>
-    <button onclick="copyReport()" style="background-color: #00B900;">📋 複製戰報 (回報 LINE)</button>
-    <button onclick="location.reload()" style="background-color: #95a5a6; margin-top: 10px;">重新開始</button>
+    <button onclick="copyReport()" style="background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);">📋 複製戰報 (回報 LINE)</button>
+    <button onclick="location.reload()" style="background: #94a3b8; margin-top: 12px; box-shadow: 0 4px 15px rgba(148, 163, 184, 0.3);">重新開始</button>
 </div>
 
 <script>
@@ -266,7 +404,7 @@
 
         currentQ = { total: total, explanation: processText };
 
-        if (multi > 0) qText += `<br>倍數: ${multi}倍 (軌道: ${trackPrice})`;
+        if (multi > 0) qText += `<br><span style="color: #64748b; font-size: 16px;">倍數: ${multi}倍 (軌道: ${trackPrice})</span>`;
         
         document.getElementById('question-text').innerHTML = qText;
     }
@@ -291,7 +429,7 @@
 
         if (userAns === currentQ.total) {
             resBox.className = 'result correct';
-            resBox.innerText = `✅ 答對了！\n\n( 即將進入下一題... )`;
+            resBox.innerText = `🎉 答對了！\n\n( 即將進入下一題... )`;
             
             document.getElementById('submit-btn').style.display = 'none';
             document.getElementById('numpad-container').style.pointerEvents = 'none';
@@ -306,7 +444,7 @@
                 currentInputValue = ''; 
                 updateInputDisplay();
             } else {
-                resBox.innerText = `❌ 已經算錯 3 次囉！\n\n正確答案: ${new Intl.NumberFormat('en-US').format(currentQ.total)}\n\n` + currentQ.explanation + `\n\n📸 正在準備分享至相簿...`;
+                resBox.innerText = `❌ 已經算錯 3 次囉！\n\n🎯 正確答案: ${new Intl.NumberFormat('en-US').format(currentQ.total)}\n\n` + currentQ.explanation + `\n\n📸 正在準備分享至相簿...`;
                 document.getElementById('submit-btn').style.display = 'none';
                 document.getElementById('numpad-container').style.pointerEvents = 'none';
                 document.getElementById('numpad-container').style.opacity = '0.5';
@@ -317,7 +455,6 @@
                         canvas.toBlob(blob => {
                             const file = new File([blob], `歐昇特訓_錯題_第${qCount}題.png`, { type: "image/png" });
                             
-                            // 呼叫手機原生分享/儲存選單
                             if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
                                 navigator.share({
                                     files: [file],
@@ -326,11 +463,9 @@
                                 }).then(() => {
                                     generateQuestion();
                                 }).catch(err => {
-                                    // 即使取消分享也直接跳下一題
                                     generateQuestion(); 
                                 });
                             } else {
-                                // 備用方案：若是不支援的原生瀏覽器，退回下載模式
                                 let link = document.createElement('a');
                                 link.download = file.name;
                                 link.href = canvas.toDataURL("image/png");
