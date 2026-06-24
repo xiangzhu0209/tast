@@ -14,132 +14,113 @@
         /* 基礎設定與重置 */
         * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
         
-        /* 強制 100% 滿版，完全阻絕灰色背景 */
+        /* 終極 iOS 17 解法：使用 100dvh (動態視窗高度)，並鎖定外層滾動 */
         html, body {
             width: 100vw;
-            height: 100%;
-            height: -webkit-fill-available;
+            height: 100dvh !important; /* 動態高度，完美避開被吃掉的問題 */
             margin: 0 !important;
             padding: 0 !important;
             background-color: #ffffff !important;
             color: #1e293b; 
             font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
-            overflow: hidden; 
+            overflow: hidden !important; 
         }
         
-        /* 卡片主體強制全螢幕 */
+        /* 卡片主體強制全螢幕，內部允許滾動 */
         .card { 
             background: white !important; 
-            /* 自動閃避 iPhone 瀏海與底部橫條 */
-            padding: calc(20px + env(safe-area-inset-top)) 20px calc(20px + env(safe-area-inset-bottom)) 20px !important; 
+            /* 精準閃避 iPhone 瀏海與底部橫條 */
+            padding: calc(15px + env(safe-area-inset-top)) 20px calc(15px + env(safe-area-inset-bottom)) 20px !important; 
             width: 100% !important;
-            height: 100% !important;
+            height: 100dvh !important; 
             max-width: none !important;
             border-radius: 0 !important;
             box-shadow: none !important;
             margin: 0 !important;
-            overflow-y: auto; 
             display: flex;
             flex-direction: column;
+            overflow-y: auto; /* 若內容真的太多，允許在卡片內滑動 */
+            -webkit-overflow-scrolling: touch;
         }
         
-        /* 標題字體加大 */
+        /* 標題字體 */
         h1 { 
-            font-size: 28px; 
+            font-size: 26px; 
             color: #0f172a; 
             text-align: center; 
             border-bottom: 2px solid #f1f5f9; 
-            padding-bottom: 15px; 
-            margin-top: 10px; 
+            padding-bottom: 12px; 
+            margin-top: 5px; 
             font-weight: 900;
+            flex-shrink: 0;
         }
         
-        /* 狀態列字體與間距加大 */
+        /* 狀態列 */
         .stats { 
             display: flex; 
             justify-content: space-between; 
             align-items: center;
             font-weight: bold; 
-            font-size: 22px; 
-            margin-bottom: 25px; 
+            font-size: 20px; 
+            margin-bottom: 15px; 
+            flex-shrink: 0;
         }
         .q-num { color: #3b82f6; background: #eff6ff; padding: 6px 16px; border-radius: 24px; }
         .score-board { color: #64748b; display: flex; align-items: center; gap: 15px;}
         .score-correct { color: #10b981; }
         .score-wrong { color: #ef4444; }
         
-        /* 題目框字體與內距大幅加大 */
+        /* 題目框 */
         .question-box { 
             background: #f8fafc; 
             border-left: 8px solid #3b82f6; 
-            padding: 25px 20px; 
+            padding: 20px; 
             border-radius: 12px; 
-            font-size: 26px; 
-            margin-bottom: 25px; 
+            font-size: 24px; 
+            margin-bottom: 15px; 
             font-weight: 700; 
             color: #1e293b;
-            line-height: 1.8;
+            line-height: 1.6;
+            flex-shrink: 0;
         }
         
         /* 輸入框 */
         input[type="text"], input[type="number"] { 
             width: 100%; 
-            padding: 20px; 
-            font-size: 36px; 
+            padding: 18px; 
+            font-size: 34px; 
             color: #0f172a;
             background-color: #ffffff;
             border: 2px solid #cbd5e1; 
             border-radius: 16px; 
-            margin-bottom: 25px; 
+            margin-bottom: 15px; 
             text-align: center; 
             font-weight: 900; 
             letter-spacing: 2px;
             user-select: none; 
             -webkit-user-select: none; 
             outline: none; 
+            flex-shrink: 0;
         }
         input::placeholder { color: #94a3b8; font-size: 20px; font-weight: bold; letter-spacing: normal; }
         
-        /* 按鈕共用 */
-        button { 
-            width: 100%; 
-            padding: 20px; 
-            font-size: 24px; 
-            color: white; 
-            border: none; 
-            border-radius: 16px; 
-            cursor: pointer; 
-            font-weight: bold; 
-            margin-bottom: 12px; 
-            touch-action: manipulation; 
-        }
-        button:active { transform: scale(0.97); }
-        
-        /* 主要按鈕 */
-        #submit-btn {
-            background: linear-gradient(135deg, #3b82f6, #2563eb);
-            box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
-            margin-top: 10px;
-        }
-        
-        /* 結束按鈕 */
-        .btn-report { 
-            background: linear-gradient(135deg, #8b5cf6, #7c3aed); 
-            box-shadow: 0 4px 15px rgba(124, 58, 237, 0.3);
-            margin-top: auto; 
-        }
-        
-        /* 滿版數字鍵盤 */
+        /* 彈性數字鍵盤：自動填滿剩餘螢幕空間 */
         .numpad { 
             display: grid; 
             grid-template-columns: repeat(3, 1fr); 
-            gap: 15px; 
+            grid-template-rows: repeat(4, 1fr); /* 強制四列均分 */
+            gap: 12px; 
+            flex-grow: 1; /* 最關鍵：自動延展高度填滿畫面 */
+            min-height: 280px; /* 設定最低高度防變形 */
             margin-bottom: 15px; 
         }
         .numpad button { 
-            margin-bottom: 0; 
-            height: 85px; 
-            padding: 0; 
+            margin: 0; 
+            height: 100%; /* 完美貼合格子 */
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             font-size: 32px; 
             font-weight: 800;
             background-color: #f1f5f9; 
@@ -156,6 +137,37 @@
         .numpad .numpad-action { background-color: #ef4444; color: white; box-shadow: 0 5px 0 #b91c1c; border: none; }
         .numpad .numpad-clear { background-color: #f59e0b; color: white; box-shadow: 0 5px 0 #d97706; border: none; }
         
+        /* 按鈕共用 */
+        .action-btn { 
+            width: 100%; 
+            padding: 18px; 
+            font-size: 22px; 
+            color: white; 
+            border: none; 
+            border-radius: 16px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            margin-bottom: 12px; 
+            touch-action: manipulation; 
+            flex-shrink: 0;
+        }
+        .action-btn:active { transform: scale(0.97); }
+        
+        /* 主要送出按鈕 */
+        #submit-btn {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
+            margin-top: auto; 
+        }
+        
+        /* 結束按鈕 */
+        .btn-report { 
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed); 
+            box-shadow: 0 4px 15px rgba(124, 58, 237, 0.3);
+            margin-top: auto; 
+            margin-bottom: 0;
+        }
+        
         /* 提示結果 */
         .result { 
             padding: 20px; 
@@ -166,6 +178,7 @@
             white-space: pre-line; 
             line-height: 1.6; 
             font-weight: bold;
+            flex-shrink: 0;
         }
         .correct { background-color: #d1fae5; color: #065f46; border: 2px solid #a7f3d0; }
         .wrong { background-color: #fee2e2; color: #991b1b; border: 2px solid #fecaca; }
@@ -182,6 +195,7 @@
             margin-bottom: 20px; 
             line-height: 1.8; 
             box-shadow: inset 0 2px 10px rgba(0,0,0,0.5);
+            flex-shrink: 0;
         }
     </style>
 </head>
@@ -191,7 +205,7 @@
     <h1 style="margin-top: 15vh;">歐昇特訓系統</h1>
     <p style="text-align: center; color: #64748b; font-weight: bold; font-size: 20px; margin-bottom: 25px;">請輸入您的姓名以開始測驗</p>
     <input type="text" id="employee-name" placeholder="請輸入姓名 (例如: 湘筑)" />
-    <button onclick="startQuiz()" id="submit-btn">🚀 開始特訓</button>
+    <button class="action-btn" onclick="startQuiz()" id="submit-btn" style="margin-top: 20px;">🚀 開始特訓</button>
 </div>
 
 <div class="card" id="quiz-screen">
@@ -223,10 +237,10 @@
         <button class="numpad-action" onclick="numpadBackspace()">⌫</button>
     </div>
     
-    <button id="submit-btn" onclick="checkAnswer()">送出答案</button>
+    <button id="submit-btn" class="action-btn" onclick="checkAnswer()">送出答案</button>
     
-    <hr style="border: none; border-top: 2px dashed #e2e8f0; margin: 15px 0;">
-    <button class="btn-report" onclick="finishQuiz()">📊 結束測驗 & 產出報告</button>
+    <hr style="border: none; border-top: 2px dashed #e2e8f0; margin: 10px 0; width: 100%;">
+    <button class="action-btn btn-report" onclick="finishQuiz()">📊 結束測驗 & 產出報告</button>
     
     <div id="result-box" class="result"></div>
 </div>
@@ -235,8 +249,8 @@
     <h1 style="margin-top: 5vh;">結果戰報</h1>
     <p style="text-align: center; font-weight: bold; color: #ef4444; font-size: 20px; margin-bottom: 20px;">請點擊下方按鈕複製，並回傳給湘筑</p>
     <div class="report-box" id="report-text"></div>
-    <button onclick="copyReport()" style="background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);">📋 複製戰報 (回報 LINE)</button>
-    <button onclick="location.reload()" style="background: #94a3b8; margin-top: 15px; box-shadow: 0 4px 15px rgba(148, 163, 184, 0.3);">重新開始</button>
+    <button class="action-btn" onclick="copyReport()" style="background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);">📋 複製戰報 (回報 LINE)</button>
+    <button class="action-btn" onclick="location.reload()" style="background: #94a3b8; margin-top: 15px; box-shadow: 0 4px 15px rgba(148, 163, 184, 0.3);">重新開始</button>
 </div>
 
 <script>
