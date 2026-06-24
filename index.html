@@ -2,306 +2,100 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
+    <!-- 關鍵：這是讓手機將網頁視為 APP 的關鍵 -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>窗簾計價特訓系統</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="歐昇計價">
+    
+    <title>歐昇計價特訓系統</title>
     <style>
-        /* 基礎設定與重置 */
-        * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 10px; background-color: #f4f7f6; color: #333; max-width: 600px; margin: 0 auto; line-height: 1.4; }
+        .card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h1 { font-size: 20px; color: #2c3e50; text-align: center; border-bottom: 2px solid #3498db; padding-bottom: 5px; }
+        .stats { display: flex; justify-content: space-between; font-weight: bold; font-size: 14px; margin-bottom: 10px; }
+        .question-box { background: #e8f4f8; padding: 10px; border-radius: 8px; font-size: 16px; margin-bottom: 10px; font-weight: bold; }
         
-        /* 手機優先：預設滿版無留白 */
-        body { 
-            font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
-            padding: 0; 
-            margin: 0; 
-            background-color: #ffffff; /* 手機版直接全白底 */
-            color: #1e293b; 
-            line-height: 1.6; 
-        }
-        
-        /* 卡片主體 (手機滿版) */
-        .card { 
-            background: white; 
-            padding: 20px 15px; 
-            max-width: 600px; 
-            margin: 0 auto; 
-            min-height: 100vh; /* 確保高度滿版 */
-            display: flex;
-            flex-direction: column;
-            border-radius: 0;
-            box-shadow: none;
-        }
-        
-        /* 大螢幕時才恢復成懸浮卡片 */
-        @media (min-width: 600px) {
-            body { padding: 20px; background-color: #e2e8f0; }
-            .card { 
-                min-height: auto; 
-                border-radius: 24px; 
-                box-shadow: 0 10px 25px rgba(0,0,0,0.08); 
-                padding: 30px 25px; 
-            }
-        }
-        
-        h1 { 
-            font-size: 24px; 
-            color: #0f172a; 
-            text-align: center; 
-            border-bottom: 2px solid #f1f5f9; 
-            padding-bottom: 15px; 
-            margin-top: 5px; 
-            font-weight: 800;
-        }
-        
-        /* 狀態列 */
-        .stats { 
-            display: flex; 
-            justify-content: space-between; 
-            font-weight: bold; 
-            font-size: 16px; 
-            margin-bottom: 20px; 
-            padding: 0 5px;
-        }
-        .q-num { color: #3b82f6; background: #eff6ff; padding: 4px 12px; border-radius: 20px; }
-        .score-board { color: #64748b; display: flex; align-items: center; gap: 10px;}
-        .score-correct { color: #10b981; }
-        .score-wrong { color: #ef4444; }
-        
-        /* 題目框 */
-        .question-box { 
-            background: #f8fafc; 
-            border-left: 6px solid #3b82f6; 
-            padding: 20px; 
-            border-radius: 12px; 
-            font-size: 20px; 
-            margin-bottom: 20px; 
-            font-weight: 700; 
-            color: #1e293b;
-            line-height: 1.7;
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
-        }
-        
-        /* 輸入框 */
-        input[type="text"], input[type="number"] { 
-            width: 100%; 
-            padding: 18px 15px; 
-            font-size: 30px; 
-            color: #0f172a;
-            background-color: #ffffff;
-            border: 2px solid #cbd5e1; 
-            border-radius: 16px; 
-            margin-bottom: 25px; 
-            text-align: center; 
-            font-weight: 900; 
-            letter-spacing: 1px;
-            user-select: none; 
-            -webkit-user-select: none; 
-            outline: none; 
-            transition: 0.2s;
-        }
-        input::placeholder { color: #94a3b8; font-size: 18px; font-weight: normal; letter-spacing: normal; }
-        
-        /* 按鈕共用 */
-        button { 
-            width: 100%; 
-            padding: 18px; 
-            font-size: 20px; 
-            color: white; 
-            border: none; 
-            border-radius: 16px; 
-            cursor: pointer; 
-            font-weight: bold; 
-            margin-bottom: 12px; 
-            touch-action: manipulation; 
-            transition: all 0.15s ease;
-        }
-        button:active { transform: scale(0.97); }
-        
-        /* 主要按鈕 */
-        #submit-btn {
-            background: linear-gradient(135deg, #3b82f6, #2563eb);
-            box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
-            margin-top: 10px;
-        }
-        
-        /* 結束按鈕 */
-        .btn-report { 
-            background: linear-gradient(135deg, #8b5cf6, #7c3aed); 
-            box-shadow: 0 4px 15px rgba(124, 58, 237, 0.3);
-            margin-top: auto; /* 讓結束按鈕自動推到最底部 */
-        }
-        
-        /* 滿版數字鍵盤 (按鈕加高) */
-        .numpad { 
-            display: grid; 
-            grid-template-columns: repeat(3, 1fr); 
-            gap: 12px; 
-            margin-bottom: 10px; 
-        }
-        .numpad button { 
-            margin-bottom: 0; 
-            height: 75px; 
-            padding: 0; 
-            font-size: 28px; 
-            font-weight: 800;
-            background-color: #f1f5f9; 
-            color: #334155; 
-            border-radius: 14px; 
-            box-shadow: 0 5px 0 #cbd5e1; 
-            border: 1px solid #e2e8f0; 
-        }
-        .numpad button:active { 
-            box-shadow: 0 0 0 transparent; 
-            transform: translateY(5px); 
-            background-color: #e2e8f0;
-        }
-        .numpad .numpad-action { 
-            background-color: #ef4444; 
-            color: white; 
-            box-shadow: 0 5px 0 #b91c1c; 
-            border: none; 
-        }
-        .numpad .numpad-action:active { background-color: #dc2626; }
-        
-        .numpad .numpad-clear { 
-            background-color: #f59e0b; 
-            color: white; 
-            box-shadow: 0 5px 0 #d97706; 
-            border: none; 
-        }
-        .numpad .numpad-clear:active { background-color: #ea580c; }
-        
-        /* 提示結果 */
-        .result { 
-            padding: 18px; 
-            border-radius: 12px; 
-            margin-top: 15px; 
-            display: none; 
-            font-size: 16px; 
-            white-space: pre-line; 
-            line-height: 1.6; 
-            font-weight: bold;
-        }
-        .correct { background-color: #d1fae5; color: #065f46; border: 2px solid #a7f3d0; }
-        .wrong { background-color: #fee2e2; color: #991b1b; border: 2px solid #fecaca; }
+        /* 數字輸入顯示區 */
+        #display-area { width: 100%; height: 50px; font-size: 24px; line-height: 50px; text-align: center; border: 2px solid #3498db; border-radius: 6px; margin-bottom: 10px; background: #fff; font-weight: bold; color: #2c3e50; }
+
+        /* 數字鍵盤樣式 */
+        .keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 15px; }
+        .key { padding: 15px; font-size: 20px; font-weight: bold; background: #ecf0f1; border: none; border-radius: 8px; cursor: pointer; }
+        .key:active { background: #bdc3c7; }
+        .key-del { background: #e74c3c; color: white; }
+        .key-ok { background: #2ecc71; color: white; grid-column: span 2; }
+
+        button { width: 100%; padding: 12px; font-size: 16px; color: white; background-color: #3498db; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; margin-bottom: 8px; }
+        .btn-next { background-color: #2ecc71; display: none; }
+        .btn-report { background-color: #9b59b6; margin-top: 10px; }
+        .result { padding: 10px; border-radius: 8px; margin-top: 10px; display: none; font-size: 14px; }
         
         #quiz-screen, #report-screen { display: none; }
-        .report-box { 
-            background: #1e293b; 
-            color: #f8fafc; 
-            padding: 20px; 
-            border-radius: 12px; 
-            font-family: monospace; 
-            font-size: 15px; 
-            white-space: pre-wrap; 
-            margin-bottom: 20px; 
-            line-height: 1.8; 
-            box-shadow: inset 0 2px 10px rgba(0,0,0,0.5);
-        }
+        .report-box { background: #34495e; color: white; padding: 15px; border-radius: 8px; font-family: monospace; font-size: 14px; white-space: pre-wrap; margin-bottom: 10px; }
     </style>
 </head>
 <body>
 
 <div class="card" id="login-screen">
-    <h1 style="margin-top: 30px;">歐昇特訓系統</h1>
-    <p style="text-align: center; color: #64748b; font-weight: bold; font-size: 16px; margin-bottom: 20px;">請輸入您的姓名以開始測驗</p>
-    <input type="text" id="employee-name" placeholder="請輸入姓名 (例如: 湘筑)" />
-    <button onclick="startQuiz()" id="submit-btn">🚀 開始特訓</button>
+    <h1>歐昇特訓系統</h1>
+    <p style="text-align: center; color: #7f8c8d; font-weight: bold;">請輸入姓名開始</p>
+    <input type="text" id="employee-name" style="width:100%; padding:12px; border:1px solid #ccc; border-radius:6px; box-sizing:border-box;" placeholder="例如: 湘筑" />
+    <button onclick="startQuiz()">開始特訓</button>
 </div>
 
 <div class="card" id="quiz-screen">
-    <h1>窗簾計價特訓系統</h1>
+    <h1>窗簾計價</h1>
     <div class="stats">
-        <span id="q-num" class="q-num">第 1 題</span>
-        <span class="score-board">
-            <span id="score-correct" class="score-correct">✅ 0</span>
-            <span id="score-wrong" class="score-wrong">❌ 0</span>
-        </span>
+        <span id="q-num">第 1 題</span>
+        <span>✅ <span id="score-correct">0</span> | ❌ <span id="score-wrong">0</span></span>
     </div>
     
     <div class="question-box" id="question-text">載入題目中...</div>
     
-    <input type="text" id="user-answer" readonly placeholder="請點擊下方數字鍵盤" />
-    
-    <div id="numpad-container" class="numpad">
-        <button onclick="numpadPress('1')">1</button>
-        <button onclick="numpadPress('2')">2</button>
-        <button onclick="numpadPress('3')">3</button>
-        <button onclick="numpadPress('4')">4</button>
-        <button onclick="numpadPress('5')">5</button>
-        <button onclick="numpadPress('6')">6</button>
-        <button onclick="numpadPress('7')">7</button>
-        <button onclick="numpadPress('8')">8</button>
-        <button onclick="numpadPress('9')">9</button>
-        <button class="numpad-clear" onclick="numpadClear()">C</button>
-        <button onclick="numpadPress('0')">0</button>
-        <button class="numpad-action" onclick="numpadBackspace()">⌫</button>
+    <div id="display-area">0</div>
+
+    <div class="keypad" id="keypad">
+        <button class="key" onclick="inputNum(1)">1</button><button class="key" onclick="inputNum(2)">2</button><button class="key" onclick="inputNum(3)">3</button>
+        <button class="key" onclick="inputNum(4)">4</button><button class="key" onclick="inputNum(5)">5</button><button class="key" onclick="inputNum(6)">6</button>
+        <button class="key" onclick="inputNum(7)">7</button><button class="key" onclick="inputNum(8)">8</button><button class="key" onclick="inputNum(9)">9</button>
+        <button class="key key-del" onclick="delNum()">⌫</button><button class="key" onclick="inputNum(0)">0</button>
+        <button class="key key-ok" onclick="checkAnswer()">送出答案</button>
     </div>
-    
-    <button id="submit-btn" onclick="checkAnswer()">送出答案</button>
-    
-    <hr style="border: none; border-top: 2px dashed #e2e8f0; margin: 20px 0;">
-    <button class="btn-report" onclick="finishQuiz()">📊 結束測驗 & 產出報告</button>
-    
+
+    <button id="next-btn" class="btn-next" onclick="generateQuestion()">下一題</button>
+    <button class="btn-report" onclick="finishQuiz()">結束測驗 & 產出報告</button>
     <div id="result-box" class="result"></div>
 </div>
 
 <div class="card" id="report-screen">
-    <h1 style="margin-top: 20px;">結果戰報</h1>
-    <p style="text-align: center; font-weight: bold; color: #ef4444; margin-bottom: 20px;">請點擊下方按鈕複製，並回傳給湘筑</p>
+    <h1>結果戰報</h1>
     <div class="report-box" id="report-text"></div>
-    <button onclick="copyReport()" style="background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);">📋 複製戰報 (回報 LINE)</button>
-    <button onclick="location.reload()" style="background: #94a3b8; margin-top: 12px; box-shadow: 0 4px 15px rgba(148, 163, 184, 0.3);">重新開始</button>
+    <button onclick="copyReport()" style="background-color: #00B900;">📋 複製戰報 (回報 LINE)</button>
+    <button onclick="location.reload()" style="background-color: #95a5a6;">重新開始</button>
 </div>
 
 <script>
-    let currentQ = {};
-    let qCount = 0;
-    let firstTryCorrectCount = 0;
-    let wrongCount = 0;
-    let attemptCount = 0;
-    
-    let userName = "";
-    let startTime = null;
-    let autoNextTimeout = null; 
-
-    let currentInputValue = "";
-
-    function updateInputDisplay() {
-        if (currentInputValue === "") {
-            document.getElementById('user-answer').value = "";
-        } else {
-            document.getElementById('user-answer').value = new Intl.NumberFormat('en-US').format(currentInputValue);
-        }
-    }
-
-    function numpadPress(num) {
-        currentInputValue += num;
-        updateInputDisplay();
-    }
-
-    function numpadBackspace() {
-        currentInputValue = currentInputValue.slice(0, -1);
-        updateInputDisplay();
-    }
-
-    function numpadClear() {
-        currentInputValue = "";
-        updateInputDisplay();
-    }
+    let currentQ = {}, qCount = 0, firstTryCorrectCount = 0, wrongCount = 0, attemptCount = 0, userName = "", startTime = null;
 
     function startQuiz() {
         const nameInput = document.getElementById('employee-name').value.trim();
-        if (!nameInput) {
-            alert("請輸入姓名！");
-            return;
-        }
-        userName = nameInput;
-        startTime = new Date(); 
-        
+        if (!nameInput) return alert("請輸入姓名！");
+        userName = nameInput; startTime = new Date();
         document.getElementById('login-screen').style.display = 'none';
         document.getElementById('quiz-screen').style.display = 'block';
         generateQuestion();
+    }
+
+    function inputNum(n) {
+        let disp = document.getElementById('display-area');
+        if (disp.innerText === '0') disp.innerText = n;
+        else disp.innerText += n;
+    }
+
+    function delNum() {
+        let disp = document.getElementById('display-area');
+        disp.innerText = disp.innerText.slice(0, -1) || '0';
     }
 
     function getRandom10(min, max) {
@@ -313,45 +107,19 @@
     }
 
     function generateQuestion() {
-        if (autoNextTimeout) {
-            clearTimeout(autoNextTimeout);
-            autoNextTimeout = null;
-        }
-
-        qCount++;
-        attemptCount = 0; 
-        
-        currentInputValue = "";
-        updateInputDisplay();
-        
+        qCount++; attemptCount = 0;
+        document.getElementById('display-area').innerText = '0';
         document.getElementById('q-num').innerText = `第 ${qCount} 題`;
-        document.getElementById('numpad-container').style.pointerEvents = 'auto';
-        document.getElementById('numpad-container').style.opacity = '1';
-        document.getElementById('submit-btn').style.display = 'block';
+        document.getElementById('keypad').style.display = 'grid';
+        document.getElementById('next-btn').style.display = 'none';
         document.getElementById('result-box').style.display = 'none';
 
-        const areaTypes = ['捲簾', '調光簾', '木百葉', '風琴簾', '穿透簾', '拉門'];
-        const clothTypes = ['五尺折景簾', '五尺蛇簾', '九尺折景簾', '九尺蛇簾'];
+        const types = ['捲簾', '調光簾', '木百葉', '風琴簾', '穿透簾', '拉門', '五尺折景簾', '五尺蛇簾', '九尺折景簾', '九尺蛇簾'];
+        const type = getRandomItem(types);
+        const w = Math.floor(Math.random() * (380 - 60 + 1)) + 60;
+        const h = Math.floor(Math.random() * (265 - 90 + 1)) + 90;
         
-        let type = '';
-        if (Math.random() < 0.3) {
-            type = getRandomItem(areaTypes);
-        } else {
-            type = getRandomItem(clothTypes);
-        }
-
-        const w_cm = Math.floor(Math.random() * (380 - 60 + 1)) + 60;
-        const h_cm = Math.floor(Math.random() * (265 - 90 + 1)) + 90;
-        
-        const w_ft = Math.ceil((w_cm / 30.3) * 10) / 10;
-        const h_ft = Math.ceil((h_cm / 30.3) * 10) / 10;
-
-        const isCmUnit = Math.random() < 0.5;
-        
-        let unitPrice = 0;
-        let trackPrice = 0;
-        let multi = 0;
-
+        let unitPrice = 0, trackPrice = 0, multi = 0;
         if (type === '捲簾') unitPrice = getRandom10(110, 150);
         else if (type === '調光簾') unitPrice = getRandom10(130, 350);
         else if (type === '木百葉') unitPrice = getRandom10(280, 400);
@@ -361,188 +129,81 @@
         else if (type.includes('五尺')) unitPrice = getRandom10(100, 250);
         else if (type.includes('九尺')) unitPrice = getRandom10(280, 450);
 
-        if (type.includes('折景')) {
-            multi = getRandomItem([2.0, 2.1, 2.2, 2.3, 2.4, 2.5]);
-            trackPrice = 60;
-        } else if (type.includes('蛇簾')) {
-            multi = getRandomItem([2.7, 2.8, 2.9, 3.0, 3.1, 3.2, 3.3]);
-            trackPrice = 130;
-        }
+        if (type.includes('折景')) { multi = getRandomItem([2.0, 2.1, 2.2, 2.3, 2.4, 2.5]); trackPrice = 60; }
+        else if (type.includes('蛇簾')) { multi = getRandomItem([2.7, 2.8, 2.9, 3.0, 3.1, 3.2, 3.3]); trackPrice = 130; }
 
+        const w_ft = Math.ceil((w / 30.3) * 10) / 10;
+        const h_ft = Math.ceil((h / 30.3) * 10) / 10;
         let total = 0;
-        let processText = "";
-        let qText = "";
-
-        if (isCmUnit) {
-            processText = `【尺寸轉換】\n寬: ${w_cm}cm ➔ ${w_ft}尺\n高: ${h_cm}cm ➔ ${h_ft}尺\n\n`;
-            qText = `尺寸: 寬 ${w_cm} cm × 高 ${h_cm} cm<br>產品: ${type}<br>單價: ${unitPrice}`;
-        } else {
-            processText = `【尺寸資訊】\n寬: ${w_ft}尺\n高: ${h_ft}尺\n\n`;
-            qText = `尺寸: 寬 ${w_ft} 尺 × 高 ${h_ft} 尺<br>產品: ${type}<br>單價: ${unitPrice}`;
-        }
+        let processText = `尺寸: ${w}x${h}cm (${w_ft}x${h_ft}尺)\n`;
 
         if (['捲簾', '調光簾', '木百葉', '風琴簾', '穿透簾'].includes(type)) {
             let area = Math.ceil(w_ft * h_ft);
-            let minArea = (type === '穿透簾') ? 35 : 15;
-            let finalArea = Math.max(area, minArea);
+            let finalArea = Math.max(area, (type === '穿透簾' ? 35 : 15));
             total = finalArea * unitPrice;
-            processText += `【才數計算】\n${w_ft} × ${h_ft} = ${area}才 (進位後)\n防呆: ${minArea}才 ➔ 計價: ${finalArea}才\n總價: ${finalArea} × ${unitPrice} = ${total}元`;
-        } 
-        else if (type === '拉門') {
-            let h_door_ceil = Math.ceil(h_ft);
-            let h_door = Math.max(7, h_door_ceil);
+            processText += `才數: ${finalArea} × 單價 ${unitPrice} = ${total}元`;
+        } else if (type === '拉門') {
+            let h_door = Math.max(7, Math.ceil(h_ft));
             let area = Math.ceil(w_ft * h_door);
-            let finalArea = Math.max(area, 20);
-            total = finalArea * unitPrice;
-            processText += `【高度陷阱】\n高 ${h_ft}尺 ➔ 進位至 ${h_door_ceil}尺\n最低7尺防呆 ➔ 計價高: ${h_door}尺\n【才數計算】\n${w_ft} × ${h_door} = ${area}才 (進位後)\n防呆: 20才 ➔ 計價: ${finalArea}才\n總價: ${finalArea} × ${unitPrice} = ${total}元`;
-        }
-        else {
+            total = Math.max(area, 20) * unitPrice;
+            processText += `拉門高度進位至 ${h_door}尺\n才數: ${Math.max(area, 20)} × 單價 ${unitPrice} = ${total}元`;
+        } else {
             let track_ft = Math.max(5, Math.ceil(w_ft));
             let totalTrack = track_ft * trackPrice;
-            processText += `【軌道】進位 ${Math.ceil(w_ft)}尺 (低消5尺) ➔ ${track_ft}尺\n價: ${track_ft} × ${trackPrice} = ${totalTrack}元\n\n`;
-
             if (type.includes('五尺')) {
                 let panels = Math.ceil((w_ft * multi) / 5);
                 let h_fab = Math.ceil(h_ft) + 1;
                 let totalFab = Math.ceil(panels * h_fab);
-                let totalFabPrice = totalFab * unitPrice;
-                total = totalFabPrice + totalTrack;
-                processText += `【布料(五尺)】\n幅: (${w_ft}×${multi})÷5 ➔ ${panels}幅\n高: ${Math.ceil(h_ft)}+1 = ${h_fab}尺\n總尺: ${panels}×${h_fab} = ${totalFab}尺\n價: ${totalFab} × ${unitPrice} = ${totalFabPrice}元\n總價: 布${totalFabPrice} + 軌${totalTrack} = ${total}元`;
-            } else if (type.includes('九尺')) {
+                total = (totalFab * unitPrice) + totalTrack;
+                processText += `幅數: ${panels}幅, 用布高: ${h_fab}尺, 總尺: ${totalFab}\n布價: ${totalFab * unitPrice} + 軌道: ${totalTrack} = ${total}元`;
+            } else {
                 let totalFab = Math.ceil(w_ft * multi);
-                let effectivePrice = (h_cm > 250) ? unitPrice + 30 : unitPrice;
-                let totalFabPrice = totalFab * effectivePrice;
-                total = totalFabPrice + totalTrack;
-                let h_warning = (h_cm > 250) ? `⚠️高>250cm加價➔單價${effectivePrice}\n` : `單價: ${effectivePrice}\n`;
-                processText += `【布料(九尺)】\n尺數: ${w_ft}×${multi} ➔ ${totalFab}尺\n${h_warning}價: ${totalFab} × ${effectivePrice} = ${totalFabPrice}元\n總價: 布${totalFabPrice} + 軌${totalTrack} = ${total}元`;
+                let effectivePrice = (h > 250) ? unitPrice + 30 : unitPrice;
+                total = (totalFab * effectivePrice) + totalTrack;
+                processText += `布總長: ${totalFab}尺\n布價: ${totalFab * effectivePrice} + 軌道: ${totalTrack} = ${total}元`;
             }
         }
-
         currentQ = { total: total, explanation: processText };
-
-        if (multi > 0) qText += `<br><span style="color: #64748b; font-size: 16px;">倍數: ${multi}倍 (軌道: ${trackPrice})</span>`;
-        
-        document.getElementById('question-text').innerHTML = qText;
+        document.getElementById('question-text').innerText = `${type} | ${w}x${h}cm`;
     }
 
     function checkAnswer() {
-        const userAns = parseInt(currentInputValue);
-        if (isNaN(userAns)) return alert("請輸入數字！");
-
-        attemptCount++; 
+        const userAns = parseInt(document.getElementById('display-area').innerText);
+        attemptCount++;
         const resBox = document.getElementById('result-box');
         resBox.style.display = 'block';
 
         if (attemptCount === 1) {
-            if (userAns === currentQ.total) {
-                firstTryCorrectCount++;
-                document.getElementById('score-correct').innerText = `✅ ${firstTryCorrectCount}`;
-            } else {
-                wrongCount++;
-                document.getElementById('score-wrong').innerText = `❌ ${wrongCount}`;
-            }
+            if (userAns === currentQ.total) firstTryCorrectCount++;
+            else wrongCount++;
         }
 
         if (userAns === currentQ.total) {
             resBox.className = 'result correct';
-            resBox.innerText = `🎉 答對了！\n\n( 即將進入下一題... )`;
-            
-            document.getElementById('submit-btn').style.display = 'none';
-            document.getElementById('numpad-container').style.pointerEvents = 'none';
-            document.getElementById('numpad-container').style.opacity = '0.5';
-
-            autoNextTimeout = setTimeout(generateQuestion, 500);
-
+            resBox.innerText = `✅ 答對了！\n${currentQ.explanation}`;
+            document.getElementById('keypad').style.display = 'none';
+            document.getElementById('next-btn').style.display = 'block';
+            document.getElementById('score-correct').innerText = `完美答對: ${firstTryCorrectCount}`;
+            document.getElementById('score-wrong').innerText = `答錯: ${wrongCount}`;
         } else {
             resBox.className = 'result wrong';
-            if (attemptCount < 3) {
-                resBox.innerText = `❌ 答錯了！(已計入錯誤題數)\n這是第 ${attemptCount} 次算錯，請再檢查一下！`;
-                currentInputValue = ''; 
-                updateInputDisplay();
-            } else {
-                resBox.innerText = `❌ 已經算錯 3 次囉！\n\n🎯 正確答案: ${new Intl.NumberFormat('en-US').format(currentQ.total)}\n\n` + currentQ.explanation + `\n\n📸 正在準備分享至相簿...`;
-                document.getElementById('submit-btn').style.display = 'none';
-                document.getElementById('numpad-container').style.pointerEvents = 'none';
-                document.getElementById('numpad-container').style.opacity = '0.5';
-
-                setTimeout(() => {
-                    const captureArea = document.getElementById('quiz-screen');
-                    html2canvas(captureArea).then(canvas => {
-                        canvas.toBlob(blob => {
-                            const file = new File([blob], `歐昇特訓_錯題_第${qCount}題.png`, { type: "image/png" });
-                            
-                            if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-                                navigator.share({
-                                    files: [file],
-                                    title: '歐昇特訓錯題',
-                                    text: `請點擊「儲存影像」存入相簿`
-                                }).then(() => {
-                                    generateQuestion();
-                                }).catch(err => {
-                                    generateQuestion(); 
-                                });
-                            } else {
-                                let link = document.createElement('a');
-                                link.download = file.name;
-                                link.href = canvas.toDataURL("image/png");
-                                link.click();
-                                generateQuestion();
-                            }
-                        }, "image/png");
-                    });
-                }, 500);
-            }
+            if (attemptCount < 3) resBox.innerText = `❌ 答錯了，請再算一次！(第 ${attemptCount} 次)`;
+            else resBox.innerText = `❌ 錯誤！正確答案是: ${currentQ.total}\n${currentQ.explanation}`;
         }
     }
 
     function finishQuiz() {
-        if (autoNextTimeout) clearTimeout(autoNextTimeout);
-
-        const totalDone = qCount - (document.getElementById('submit-btn').style.display === 'block' ? 1 : 0);
-        
-        if (totalDone === 0) {
-            alert("你還沒有完成任何題目喔！");
-            return;
-        }
-
         const endTime = new Date();
         const timeDiff = Math.floor((endTime - startTime) / 1000);
-        const minutes = Math.floor(timeDiff / 60);
-        const seconds = timeDiff % 60;
-        const accuracy = Math.round((firstTryCorrectCount / totalDone) * 100);
-
-        const report = `📋【歐昇窗簾計價特訓戰報】\n` +
-                       `🧑‍💼姓名：${userName}\n` +
-                       `⏱️ 測驗時長：${minutes} 分 ${seconds} 秒\n` +
-                       `-----------------------\n` +
-                       `📊 總完成題數：${totalDone} 題\n` +
-                       `✅ 答對：${firstTryCorrectCount} 題\n` +
-                       `❌ 答錯：${wrongCount} 題\n` +
-                       `🎯 答對率：${accuracy}%\n` +
-                       `-----------------------\n` +
-                       `※ 系統自動結算，請提交給湘筑。`;
-
+        const report = `📋【歐昇特訓戰報】\n姓名：${userName}\n時長：${Math.floor(timeDiff/60)}分${timeDiff%60}秒\n✅ 完美答對：${firstTryCorrectCount}\n❌ 答錯：${wrongCount}`;
         document.getElementById('quiz-screen').style.display = 'none';
         document.getElementById('report-screen').style.display = 'block';
         document.getElementById('report-text').innerText = report;
     }
 
     function copyReport() {
-        const reportText = document.getElementById('report-text').innerText;
-        
-        const textArea = document.createElement("textarea");
-        textArea.value = reportText;
-        document.body.appendChild(textArea);
-        textArea.select();
-        try {
-            document.execCommand('copy');
-            alert("✅ 戰報已複製！趕快去 LINE 群組貼上回報吧！");
-        } catch (err) {
-            alert("複製失敗，請手動選取上方文字複製。");
-        }
-        document.body.removeChild(textArea);
+        navigator.clipboard.writeText(document.getElementById('report-text').innerText).then(() => alert("已複製！"));
     }
-
 </script>
 
 </body>
