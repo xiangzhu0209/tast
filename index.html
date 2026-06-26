@@ -102,7 +102,7 @@
             flex-shrink: 0;
         }
         
-        /* 數字鍵盤：解決觸控不良，加入 touch-action: none 毫秒級響應 */
+        /* 數字鍵盤 */
         .numpad { 
             display: grid; 
             grid-template-columns: repeat(3, 1fr); 
@@ -198,7 +198,7 @@
             flex-shrink: 0;
         }
 
-        /* 錯題檢視清單區區塊 */
+        /* 錯題檢視清單區塊 */
         .wrong-questions-section {
             margin-top: 20px;
             flex-shrink: 0;
@@ -251,7 +251,6 @@
     
     <input type="text" id="user-answer" readonly placeholder="請點擊下方數字鍵盤" />
     
-    <!-- 數字鍵盤區：綁定 ontouchstart 解決手機觸控延遲與不良問題 -->
     <div id="numpad-container" class="numpad">
         <button ontouchstart="numpadPress('1')" onclick="numpadPress('1')">1</button>
         <button ontouchstart="numpadPress('2')" onclick="numpadPress('2')">2</button>
@@ -284,12 +283,10 @@
     
     <button class="action-btn" onclick="copyReport()" style="background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);">📋 複製戰報 (回報 LINE)</button>
     
-    <!-- 一鍵截圖錯題按鈕（僅在有錯題時顯示） -->
     <button id="screenshot-all-wrong-btn" class="action-btn" onclick="screenshotAllWrong()" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8); box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3); display: none;">📸 一鍵截圖所有錯題留存</button>
     
     <button class="action-btn" onclick="location.reload()" style="background: #94a3b8; margin-top: 5px; box-shadow: 0 4px 15px rgba(148, 163, 184, 0.3);">重新開始</button>
 
-    <!-- 錯題清單匯總區（供一鍵截圖用） -->
     <div id="wrong-questions-container" class="wrong-questions-section"></div>
 </div>
 
@@ -303,15 +300,13 @@
     let userName = "";
     let startTime = null;
     let autoNextTimeout = null; 
-    let timerInterval = null; // 計時器核心
+    let timerInterval = null; 
 
     let currentInputValue = "";
     
-    // 儲存所有「沒能一次答對」的題目資訊
     let wrongQuestionsLog = []; 
     let currentQuestionRawText = ""; 
 
-    // 計時器功能
     function startTimer() {
         timerInterval = setInterval(() => {
             const now = new Date();
@@ -330,7 +325,6 @@
         }
     }
 
-    // 防止 touchstart 和 click 重複觸發
     function numpadPress(num) {
         event.preventDefault(); 
         currentInputValue += num;
@@ -361,7 +355,7 @@
         document.getElementById('login-screen').style.display = 'none';
         document.getElementById('quiz-screen').style.display = 'flex'; 
         
-        startTimer(); // 啟動計時
+        startTimer(); 
         generateQuestion();
     }
 
@@ -391,19 +385,41 @@
         document.getElementById('submit-btn').style.display = 'block';
         document.getElementById('result-box').style.display = 'none';
 
-        const areaTypes = ['捲簾', '調光簾', '木百葉', '風琴簾', '穿透簾', '拉門'];
-        const clothTypes = ['五尺折景簾', '五尺蛇簾', '九尺折景簾', '九尺蛇簾'];
-        
+        // 依照要求的機率配比設定題型
+        let r = Math.random();
+        let typeCategory = '';
+        if (r < 0.20) typeCategory = '五尺折景簾'; // 20%
+        else if (r < 0.30) typeCategory = '五尺蛇簾'; // 10%
+        else if (r < 0.40) typeCategory = '九尺折景簾_標準'; // 10%
+        else if (r < 0.50) typeCategory = '九尺蛇簾_標準'; // 10%
+        else if (r < 0.65) typeCategory = '九尺高度陷阱'; // 15%
+        else if (r < 0.80) typeCategory = '九呎布橫車'; // 15%
+        else typeCategory = '其他'; // 20%
+
         let type = '';
-        if (Math.random() < 0.3) {
-            type = getRandomItem(areaTypes);
+        const w_cm = Math.floor(Math.random() * (380 - 60 + 1)) + 60;
+        let h_cm = Math.floor(Math.random() * (265 - 90 + 1)) + 90;
+
+        if (typeCategory === '五尺折景簾') {
+            type = '五尺折景簾';
+        } else if (typeCategory === '五尺蛇簾') {
+            type = '五尺蛇簾';
+        } else if (typeCategory === '九尺折景簾_標準') {
+            type = '九尺折景簾';
+            h_cm = Math.floor(Math.random() * (250 - 90 + 1)) + 90; // 強制 <= 250
+        } else if (typeCategory === '九尺蛇簾_標準') {
+            type = '九尺蛇簾';
+            h_cm = Math.floor(Math.random() * (250 - 90 + 1)) + 90; // 強制 <= 250
+        } else if (typeCategory === '九尺高度陷阱') {
+            type = getRandomItem(['九尺折景簾', '九尺蛇簾']);
+            h_cm = Math.floor(Math.random() * (320 - 251 + 1)) + 251; // 強制 > 250，觸發陷阱
+        } else if (typeCategory === '九呎布橫車') {
+            type = getRandomItem(['九呎布橫車折景簾', '九呎布橫車蛇簾']);
         } else {
-            type = getRandomItem(clothTypes);
+            const areaTypes = ['捲簾', '調光簾', '木百葉', '風琴簾', '穿透簾', '拉門'];
+            type = getRandomItem(areaTypes);
         }
 
-        const w_cm = Math.floor(Math.random() * (380 - 60 + 1)) + 60;
-        const h_cm = Math.floor(Math.random() * (265 - 90 + 1)) + 90;
-        
         const w_ft = Math.ceil((w_cm / 30.3) * 10) / 10;
         const h_ft = Math.ceil((h_cm / 30.3) * 10) / 10;
 
@@ -412,6 +428,12 @@
         let unitPrice = 0;
         let trackPrice = 0;
         let multi = 0;
+        let fabric_roll_h_cm = 0;
+
+        // 若為橫車，隨機給定布料高度
+        if (type.includes('橫車')) {
+            fabric_roll_h_cm = getRandomItem([280, 290, 300, 310, 320]);
+        }
 
         if (type === '捲簾') unitPrice = getRandom10(110, 150);
         else if (type === '調光簾') unitPrice = getRandom10(130, 350);
@@ -420,6 +442,7 @@
         else if (type === '穿透簾') unitPrice = getRandom10(250, 480);
         else if (type === '拉門') unitPrice = 100;
         else if (type.includes('五尺')) unitPrice = getRandom10(100, 250);
+        else if (type.includes('橫車')) unitPrice = getRandom10(280, 450);
         else if (type.includes('九尺')) unitPrice = getRandom10(280, 450);
 
         if (type.includes('折景')) {
@@ -434,14 +457,18 @@
         let processText = "";
         let qText = "";
 
+        // 整理畫面顯示的產品名稱
+        let displayType = type.includes('橫車') ? `${type} <span style="color:#ef4444; font-size:22px;">(布高: ${fabric_roll_h_cm}cm)</span>` : type;
+        let rawType = type.includes('橫車') ? `${type} (布高: ${fabric_roll_h_cm}cm)` : type;
+
         if (isCmUnit) {
             processText = `【尺寸轉換】\n寬: ${w_cm}cm ➔ ${w_ft}尺\n高: ${h_cm}cm ➔ ${h_ft}尺\n\n`;
-            qText = `尺寸: 寬 ${w_cm} cm × 高 ${h_cm} cm<br>產品: ${type}<br>單價: ${unitPrice}`;
-            currentQuestionRawText = `尺寸: 寬 ${w_cm} cm × 高 ${h_cm} cm | 產品: ${type} | 單價: ${unitPrice}`;
+            qText = `尺寸: 寬 ${w_cm} cm × 高 ${h_cm} cm<br>產品: ${displayType}<br>單價: ${unitPrice}`;
+            currentQuestionRawText = `尺寸: 寬 ${w_cm} cm × 高 ${h_cm} cm | 產品: ${rawType} | 單價: ${unitPrice}`;
         } else {
             processText = `【尺寸資訊】\n寬: ${w_ft}尺\n高: ${h_ft}尺\n\n`;
-            qText = `尺寸: 寬 ${w_ft} 尺 × 高 ${h_ft} 尺<br>產品: ${type}<br>單價: ${unitPrice}`;
-            currentQuestionRawText = `尺寸: 寬 ${w_ft} 尺 × 高 ${h_ft} 尺 | 產品: ${type} | 單價: ${unitPrice}`;
+            qText = `尺寸: 寬 ${w_ft} 尺 × 高 ${h_ft} 尺<br>產品: ${displayType}<br>單價: ${unitPrice}`;
+            currentQuestionRawText = `尺寸: 寬 ${w_ft} 尺 × 高 ${h_ft} 尺 | 產品: ${rawType} | 單價: ${unitPrice}`;
         }
 
         if (['捲簾', '調光簾', '木百葉', '風琴簾', '穿透簾'].includes(type)) {
@@ -471,6 +498,16 @@
                 let totalFabPrice = totalFab * unitPrice;
                 total = totalFabPrice + totalTrack;
                 processText += `【布料(五尺)】\n幅: (${w_ft}×${multi})÷5 ➔ ${panels}幅\n高: ${Math.ceil(h_ft)}+1 = ${h_fab}尺\n總尺: ${panels}×${h_fab} = ${totalFab}尺\n價: ${totalFab} × ${unitPrice} = ${totalFabPrice}元\n總價: 布${totalFabPrice} + 軌${totalTrack} = ${total}元`;
+            } else if (type.includes('橫車')) {
+                // 橫車專屬邏輯：(寬cm * 倍數) / 布高cm
+                let panels = Math.ceil((w_cm * multi) / fabric_roll_h_cm);
+                let h_fab = Math.ceil(h_ft) + 1;
+                let totalFab = Math.ceil(panels * h_fab);
+                let totalFabPrice = totalFab * unitPrice;
+                total = totalFabPrice + totalTrack;
+                
+                let widthHint = isCmUnit ? w_cm : `${w_ft}尺➔${w_cm}cm`;
+                processText += `【布料(橫車)】\n幅: (${widthHint} × ${multi}) ÷ ${fabric_roll_h_cm}(布高) ➔ 進位 ${panels}幅\n高: ${Math.ceil(h_ft)}+1(損耗) = ${h_fab}尺\n總尺: ${panels}×${h_fab} = ${totalFab}尺\n價: ${totalFab} × ${unitPrice} = ${totalFabPrice}元\n總價: 布${totalFabPrice} + 軌${totalTrack} = ${total}元`;
             } else if (type.includes('九尺')) {
                 let totalFab = Math.ceil(w_ft * multi);
                 let effectivePrice = (h_cm > 250) ? unitPrice + 30 : unitPrice;
@@ -508,7 +545,6 @@
                 wrongCount++;
                 document.getElementById('score-wrong').innerText = `❌ ${wrongCount}`;
                 
-                // 只要第一次算錯，就把這題記錄到錯題簿
                 wrongQuestionsLog.push({
                     qNum: qCount,
                     question: currentQuestionRawText,
@@ -573,7 +609,7 @@
 
     function finishQuiz() {
         if (autoNextTimeout) clearTimeout(autoNextTimeout);
-        if (timerInterval) clearInterval(timerInterval); // 停止計時
+        if (timerInterval) clearInterval(timerInterval); 
 
         const totalDone = qCount - (document.getElementById('submit-btn').style.display === 'block' ? 1 : 0);
         
@@ -601,12 +637,11 @@
 
         document.getElementById('report-text').innerText = report;
 
-        // 渲染錯題一覽區
         const wrongContainer = document.getElementById('wrong-questions-container');
-        wrongContainer.innerHTML = ""; // 清空
+        wrongContainer.innerHTML = ""; 
 
         if (wrongQuestionsLog.length > 0) {
-            document.getElementById('screenshot-all-wrong-btn').style.display = 'block'; // 秀出截圖按鈕
+            document.getElementById('screenshot-all-wrong-btn').style.display = 'block'; 
             
             let sectionTitle = document.createElement('h3');
             sectionTitle.innerText = `🔺 本次錯題簿回顧 (${wrongQuestionsLog.length} 題)`;
@@ -635,7 +670,6 @@
         document.getElementById('report-screen').style.display = 'flex'; 
     }
 
-    // 一鍵打包截圖所有錯題
     function screenshotAllWrong() {
         const target = document.getElementById('wrong-questions-container');
         buttonStatus(true);
