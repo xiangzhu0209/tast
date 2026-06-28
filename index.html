@@ -9,7 +9,12 @@
     <meta name="apple-mobile-web-app-title" content="歐昇特訓">
     
     <title>窗簾計價特訓系統</title>
+    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
     <style>
         /* 基礎設定與重置 */
         * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
@@ -83,7 +88,7 @@
         }
         
         /* 輸入框 */
-        input[type="text"] { 
+        input[type="text"], input[type="password"] { 
             width: 100%; 
             padding: 15px; 
             font-size: 34px; 
@@ -96,7 +101,6 @@
             font-weight: 900; 
             letter-spacing: 2px;
             user-select: none; 
-            -webkit-user-select: none; 
             outline: none; 
             flex-shrink: 0;
         }
@@ -229,6 +233,26 @@
     <p style="text-align: center; color: #64748b; font-weight: bold; font-size: 20px; margin-bottom: 25px;">請輸入您的姓名以開始測驗</p>
     <input type="text" id="employee-name" placeholder="請輸入姓名 (例如: 湘筑)" />
     <button class="action-btn" onclick="startQuiz()" id="submit-btn" style="margin-top: 20px;">🚀 開始特訓</button>
+    
+    <p style="text-align: center; margin-top: auto; font-size: 12px; color: #cbd5e1; cursor: pointer; padding: 10px;" onclick="showAdminLogin()">歐昇特訓系統版權所有</p>
+</div>
+
+<div class="card" id="admin-login-screen" style="display:none;">
+    <h1 style="margin-top: 15vh; color: #ef4444;">歐昇戰情室</h1>
+    <p style="text-align: center; color: #64748b; font-weight: bold; font-size: 18px; margin-bottom: 25px;">限管理員進入</p>
+    <input type="password" id="admin-password" placeholder="請輸入管理密碼" style="font-size: 24px;" />
+    <button class="action-btn" onclick="checkAdmin()" style="background: linear-gradient(135deg, #ef4444, #b91c1c); margin-top: 20px;">🔓 登入</button>
+    <button class="action-btn" onclick="cancelAdminLogin()" style="background: #94a3b8;">返回</button>
+</div>
+
+<div class="card" id="admin-panel" style="display:none;">
+    <h1 style="color: #0f172a;">📊 特訓數據監控</h1>
+    <div style="display: flex; gap: 10px; margin-bottom: 15px; flex-shrink: 0;">
+        <button class="action-btn" onclick="loadData()" style="background: #3b82f6; margin-bottom: 0; font-size: 18px; padding: 12px;">🔄 刷新數據</button>
+        <button class="action-btn" onclick="exitAdmin()" style="background: #94a3b8; margin-bottom: 0; font-size: 18px; padding: 12px;">登出</button>
+    </div>
+    <div id="data-list" style="flex-grow: 1; overflow-y: auto; padding-bottom: 20px;">
+        </div>
 </div>
 
 <div class="card" id="quiz-screen">
@@ -287,6 +311,111 @@
 </div>
 
 <script>
+    // ==========================================
+    // 1. 初始化 Firebase 
+    // ==========================================
+    const firebaseConfig = {
+        apiKey: "AIzaSyB7ocPOFoQ81oY2N45Z1L0-Kz9A-q1kNXo",
+        authDomain: "tast-53c50.firebaseapp.com",
+        projectId: "tast-53c50",
+        storageBucket: "tast-53c50.firebasestorage.app",
+        messagingSenderId: "896996709947",
+        appId: "1:896996709947:web:90055541dff5e14770ae1e"
+    };
+    
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // ==========================================
+    // 戰情室後台邏輯
+    // ==========================================
+    function showAdminLogin() {
+        document.getElementById('login-screen').style.display = 'none';
+        document.getElementById('admin-login-screen').style.display = 'flex';
+    }
+
+    function cancelAdminLogin() {
+        document.getElementById('admin-login-screen').style.display = 'none';
+        document.getElementById('login-screen').style.display = 'flex';
+        document.getElementById('admin-password').value = '';
+    }
+
+    function checkAdmin() {
+        const pwd = document.getElementById('admin-password').value;
+        if (pwd === "ossen888") { // ★ 這裡設定你的管理員密碼
+            document.getElementById('admin-login-screen').style.display = 'none';
+            document.getElementById('admin-panel').style.display = 'flex';
+            loadData();
+        } else {
+            alert("密碼錯誤！");
+        }
+    }
+
+    function exitAdmin() {
+        document.getElementById('admin-panel').style.display = 'none';
+        document.getElementById('login-screen').style.display = 'flex';
+        document.getElementById('admin-password').value = '';
+    }
+
+    function loadData() {
+        const list = document.getElementById('data-list');
+        list.innerHTML = "<p style='text-align:center; margin-top:20px; font-weight:bold;'>資料抓取中...</p>";
+        
+        db.collection("training_reports")
+          .orderBy("submitTime", "desc")
+          .limit(30)
+          .get()
+          .then((querySnapshot) => {
+              list.innerHTML = "";
+              if (querySnapshot.empty) {
+                  list.innerHTML = "<p style='text-align:center; color:#64748b;'>目前尚無任何員工的測驗紀錄。</p>";
+                  return;
+              }
+              querySnapshot.forEach((doc) => {
+                  const data = doc.data();
+                  // 處理時間顯示
+                  const date = data.submitTime ? data.submitTime.toDate().toLocaleString('zh-TW', { month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit' }) : "未知時間";
+                  
+                  // 判斷分數顏色
+                  const scoreColor = data.accuracy >= 90 ? '#10b981' : (data.accuracy >= 60 ? '#f59e0b' : '#ef4444');
+                  
+                  // 組裝錯題明細 HTML
+                  let wrongHtml = "";
+                  if (data.wrongDetails && data.wrongDetails.length > 0) {
+                      wrongHtml = `<div style="margin-top:10px; padding:10px; background:#fee2e2; border-radius:8px; font-size:14px; border: 1px solid #fecaca;">`;
+                      wrongHtml += `<strong style="color:#ef4444;">錯題還原：</strong><br>`;
+                      data.wrongDetails.forEach(w => {
+                          wrongHtml += `<div style="margin-top:6px; border-bottom: 1px dashed #fca5a5; padding-bottom: 4px;">
+                              <span style="color:#334155; font-weight:bold;">第 ${w.qNum} 題</span><br>
+                              標準: <span style="color:#10b981; font-weight:bold;">${w.correctAns}</span> / 輸入: <span style="color:#ef4444; font-weight:bold;">${w.userWrongAns}</span>
+                          </div>`;
+                      });
+                      wrongHtml += `</div>`;
+                  } else {
+                      wrongHtml = `<div style="margin-top:10px; color:#10b981; font-weight:bold; font-size:14px; background:#d1fae5; padding:8px; border-radius:8px; text-align:center;">✅ 滿分，完美通關</div>`;
+                  }
+                  
+                  list.innerHTML += `
+                      <div class="wrong-q-card" style="border-left: 6px solid ${scoreColor}; border-color: #e2e8f0; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                          <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px; margin-bottom: 8px;">
+                              <strong style="font-size:18px; color:#0f172a;">🧑‍💼 ${data.employeeName}</strong>
+                              <span style="font-size:20px; font-weight:900; color:${scoreColor};">${data.accuracy}%</span>
+                          </div>
+                          <p style="margin: 4px 0; font-size: 14px; color: #475569;">📅 ${date} | ⏱️ ${data.timeTaken}</p>
+                          <p style="margin: 4px 0; font-size: 14px; color: #475569;">🎯 共 ${data.totalQuestions} 題 (對 ${data.correctCount} / 錯 ${data.wrongCount})</p>
+                          ${wrongHtml}
+                      </div>
+                  `;
+              });
+          })
+          .catch(error => {
+              list.innerHTML = `<p style="color:red; text-align:center;">讀取失敗: ${error.message}</p>`;
+          });
+    }
+
+    // ==========================================
+    // 特訓系統主邏輯
+    // ==========================================
     let currentQ = {};
     let qCount = 0;
     let firstTryCorrectCount = 0;
@@ -381,15 +510,14 @@
         document.getElementById('submit-btn').style.display = 'block';
         document.getElementById('result-box').style.display = 'none';
 
-        // ★ 重點修正：大幅調高「九尺高度陷阱」在九尺系列中的佔比 ★
-        // 總共九尺佔 35% (0.3~0.65)，現在讓陷阱佔 31%，標準題只佔 4%
+        // 九尺高度陷阱佔比調高，確保訓練強度
         let r = Math.random();
         let typeCategory = '';
         if (r < 0.20) typeCategory = '五尺折景簾'; // 20%
         else if (r < 0.30) typeCategory = '五尺蛇簾'; // 10%
         else if (r < 0.32) typeCategory = '九尺折景簾_標準'; // 2%
         else if (r < 0.34) typeCategory = '九尺蛇簾_標準'; // 2%
-        else if (r < 0.65) typeCategory = '九尺高度陷阱'; // 31% (確保九尺題目有超過 90% 都是陷阱)
+        else if (r < 0.65) typeCategory = '九尺高度陷阱'; // 31%
         else if (r < 0.80) typeCategory = '九呎布橫車'; // 15%
         else typeCategory = '其他'; // 20%
 
@@ -406,20 +534,19 @@
         } else if (typeCategory === '九尺折景簾_標準') {
             type = '九尺折景簾';
             fabric_roll_h_cm = getRandomItem([280, 290, 300, 310, 320, 330, 340]);
-            h_cm = Math.floor(Math.random() * ((fabric_roll_h_cm - 31) - 90 + 1)) + 90; // 無陷阱
+            h_cm = Math.floor(Math.random() * ((fabric_roll_h_cm - 31) - 90 + 1)) + 90; 
         } else if (typeCategory === '九尺蛇簾_標準') {
             type = '九尺蛇簾';
             fabric_roll_h_cm = getRandomItem([280, 290, 300, 310, 320, 330, 340]);
-            h_cm = Math.floor(Math.random() * ((fabric_roll_h_cm - 31) - 90 + 1)) + 90; // 無陷阱
+            h_cm = Math.floor(Math.random() * ((fabric_roll_h_cm - 31) - 90 + 1)) + 90; 
         } else if (typeCategory === '九尺高度陷阱') {
             type = getRandomItem(['九尺折景簾', '九尺蛇簾']);
             fabric_roll_h_cm = getRandomItem([280, 290, 300, 310, 320, 330, 340]);
-            // 觸發陷阱：高度介於 (布高-29) 到 布高 之間
             h_cm = Math.floor(Math.random() * (fabric_roll_h_cm - (fabric_roll_h_cm - 29) + 1)) + (fabric_roll_h_cm - 29);
         } else if (typeCategory === '九呎布橫車') {
             type = getRandomItem(['九呎布橫車折景簾', '九呎布橫車蛇簾']);
             fabric_roll_h_cm = getRandomItem([280, 290, 300, 310, 320]);
-            h_cm = Math.floor(Math.random() * (fabric_roll_h_cm - 90 + 1)) + 90; // 防呆確保不超過布高
+            h_cm = Math.floor(Math.random() * (fabric_roll_h_cm - 90 + 1)) + 90; 
         } else {
             const areaTypes = ['捲簾', '調光簾', '木百葉', '風琴簾', '穿透簾', '拉門'];
             type = getRandomItem(areaTypes);
@@ -427,7 +554,6 @@
 
         const w_ft = Math.ceil((w_cm / 30.3) * 10) / 10;
         const h_ft = Math.ceil((h_cm / 30.3) * 10) / 10;
-
         const isCmUnit = Math.random() < 0.5;
         
         let unitPrice = 0;
@@ -506,7 +632,6 @@
                 let totalFab = Math.ceil(panels * h_fab);
                 let totalFabPrice = totalFab * unitPrice;
                 total = totalFabPrice + totalTrack;
-                
                 let widthHint = isCmUnit ? w_cm : `${w_ft}尺➔${w_cm}cm`;
                 processText += `【布料(橫車)】\n幅: (${widthHint} × ${multi}) ÷ ${fabric_roll_h_cm}(布高) ➔ 進位 ${panels}幅\n高: ${Math.ceil(h_ft)}+1(損耗) = ${h_fab}尺\n總尺: ${panels}×${h_fab} = ${totalFab}尺\n價: ${totalFab} × ${unitPrice} = ${totalFabPrice}元\n總價: 布${totalFabPrice} + 軌${totalTrack} = ${total}元`;
             } else if (type.includes('九尺')) {
@@ -558,7 +683,6 @@
             } else {
                 wrongCount++;
                 document.getElementById('score-wrong').innerText = `❌ ${wrongCount}`;
-                
                 wrongQuestionsLog.push({
                     qNum: qCount,
                     question: currentQuestionRawText,
@@ -572,13 +696,10 @@
         if (userAns === currentQ.total) {
             resBox.className = 'result correct';
             resBox.innerText = `🎉 答對了！\n\n( 即將進入下一題... )`;
-            
             document.getElementById('submit-btn').style.display = 'none';
             document.getElementById('numpad-container').style.pointerEvents = 'none';
             document.getElementById('numpad-container').style.opacity = '0.5';
-
-            autoNextTimeout = setTimeout(generateQuestion, 500);
-
+            autoNextTimeout = setTimeout(generateQuestion, 1500);
         } else {
             resBox.className = 'result wrong';
             if (attemptCount < 3) {
@@ -596,7 +717,6 @@
                     html2canvas(captureArea).then(canvas => {
                         canvas.toBlob(blob => {
                             const file = new File([blob], `歐昇特訓_錯題_第${qCount}題.png`, { type: "image/png" });
-                            
                             if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
                                 navigator.share({
                                     files: [file],
@@ -621,7 +741,7 @@
         }
     }
 
-    function finishQuiz() {
+    async function finishQuiz() {
         if (autoNextTimeout) clearTimeout(autoNextTimeout);
         if (timerInterval) clearInterval(timerInterval); 
 
@@ -632,11 +752,39 @@
             return;
         }
 
+        const finishBtn = document.querySelector('.btn-report');
+        const originalBtnText = finishBtn.innerText;
+        finishBtn.innerText = "⏳ 戰報結算與資料上傳中...";
+        finishBtn.disabled = true;
+        finishBtn.style.opacity = "0.7";
+
         const endTime = new Date();
         const timeDiff = Math.floor((endTime - startTime) / 1000);
         const minutes = Math.floor(timeDiff / 60);
         const seconds = timeDiff % 60;
         const accuracy = Math.round((firstTryCorrectCount / totalDone) * 100);
+
+        const reportData = {
+            employeeName: userName,
+            submitTime: firebase.firestore.FieldValue.serverTimestamp(),
+            timeTaken: `${minutes}分${seconds}秒`,
+            totalQuestions: totalDone,
+            correctCount: firstTryCorrectCount,
+            wrongCount: wrongCount,
+            accuracy: accuracy,
+            wrongDetails: wrongQuestionsLog
+        };
+
+        try {
+            await db.collection("training_reports").add(reportData);
+            console.log("資料上傳成功");
+        } catch (error) {
+            console.error("上傳失敗:", error);
+        } finally {
+            finishBtn.innerText = originalBtnText;
+            finishBtn.disabled = false;
+            finishBtn.style.opacity = "1";
+        }
 
         const report = `📋【歐昇窗簾計價特訓戰報】\n` +
                        `🧑‍💼姓名：${userName}\n` +
