@@ -104,6 +104,12 @@
             outline: none; 
             flex-shrink: 0;
         }
+
+        #employee-name, #admin-password {
+            user-select: auto !important; 
+            -webkit-user-select: auto !important;
+            letter-spacing: normal;
+        }
         
         /* 數字鍵盤 */
         .numpad { 
@@ -342,7 +348,7 @@
 
     function checkAdmin() {
         const pwd = document.getElementById('admin-password').value;
-        if (pwd === "ossen888") { // ★ 這裡設定你的管理員密碼
+        if (pwd === "671213") { 
             document.getElementById('admin-login-screen').style.display = 'none';
             document.getElementById('admin-panel').style.display = 'flex';
             loadData();
@@ -379,15 +385,19 @@
                   // 判斷分數顏色
                   const scoreColor = data.accuracy >= 90 ? '#10b981' : (data.accuracy >= 60 ? '#f59e0b' : '#ef4444');
                   
-                  // 組裝錯題明細 HTML
+                  // 組裝錯題明細 HTML (加入題目細節與千分位格式化)
                   let wrongHtml = "";
                   if (data.wrongDetails && data.wrongDetails.length > 0) {
                       wrongHtml = `<div style="margin-top:10px; padding:10px; background:#fee2e2; border-radius:8px; font-size:14px; border: 1px solid #fecaca;">`;
                       wrongHtml += `<strong style="color:#ef4444;">錯題還原：</strong><br>`;
                       data.wrongDetails.forEach(w => {
-                          wrongHtml += `<div style="margin-top:6px; border-bottom: 1px dashed #fca5a5; padding-bottom: 4px;">
-                              <span style="color:#334155; font-weight:bold;">第 ${w.qNum} 題</span><br>
-                              標準: <span style="color:#10b981; font-weight:bold;">${w.correctAns}</span> / 輸入: <span style="color:#ef4444; font-weight:bold;">${w.userWrongAns}</span>
+                          const fmtCorrect = new Intl.NumberFormat('en-US').format(w.correctAns);
+                          const fmtWrong = new Intl.NumberFormat('en-US').format(w.userWrongAns);
+                          
+                          wrongHtml += `<div style="margin-top:8px; border-bottom: 1px dashed #fca5a5; padding-bottom: 8px;">
+                              <span style="color:#334155; font-weight:bold; font-size:15px;">第 ${w.qNum} 題</span><br>
+                              <div style="color:#64748b; font-size:13px; margin:4px 0; line-height: 1.4;">${w.question}</div>
+                              標準: <span style="color:#10b981; font-weight:bold;">${fmtCorrect}</span> / 輸入: <span style="color:#ef4444; font-weight:bold;">${fmtWrong}</span>
                           </div>`;
                       });
                       wrongHtml += `</div>`;
@@ -510,7 +520,6 @@
         document.getElementById('submit-btn').style.display = 'block';
         document.getElementById('result-box').style.display = 'none';
 
-        // 九尺高度陷阱佔比調高，確保訓練強度
         let r = Math.random();
         let typeCategory = '';
         if (r < 0.20) typeCategory = '五尺折景簾'; // 20%
@@ -699,7 +708,7 @@
             document.getElementById('submit-btn').style.display = 'none';
             document.getElementById('numpad-container').style.pointerEvents = 'none';
             document.getElementById('numpad-container').style.opacity = '0.5';
-            autoNextTimeout = setTimeout(generateQuestion, 1500);
+            autoNextTimeout = setTimeout(generateQuestion, 500);
         } else {
             resBox.className = 'result wrong';
             if (attemptCount < 3) {
