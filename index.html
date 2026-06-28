@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     
-    <!-- 蘋果 iOS 專屬全螢幕 Web App 設定 -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="歐昇特訓">
@@ -225,7 +224,6 @@
 </head>
 <body>
 
-<!-- 登入畫面 -->
 <div class="card" id="login-screen">
     <h1 style="margin-top: 15vh;">歐昇特訓系統</h1>
     <p style="text-align: center; color: #64748b; font-weight: bold; font-size: 20px; margin-bottom: 25px;">請輸入您的姓名以開始測驗</p>
@@ -233,7 +231,6 @@
     <button class="action-btn" onclick="startQuiz()" id="submit-btn" style="margin-top: 20px;">🚀 開始特訓</button>
 </div>
 
-<!-- 測驗畫面 -->
 <div class="card" id="quiz-screen">
     <h1>窗簾計價特訓系統</h1>
     <div class="stats">
@@ -274,7 +271,6 @@
     <div id="result-box" class="result"></div>
 </div>
 
-<!-- 報告畫面 -->
 <div class="card" id="report-screen">
     <h1 style="margin-top: 2vh;">結果戰報</h1>
     <p style="text-align: center; font-weight: bold; color: #ef4444; font-size: 20px; margin-bottom: 15px;">請複製戰報，並可一鍵截圖錯題</p>
@@ -385,20 +381,23 @@
         document.getElementById('submit-btn').style.display = 'block';
         document.getElementById('result-box').style.display = 'none';
 
-        // 依照要求的機率配比設定題型
+        // ★ 重點修正：大幅調高「九尺高度陷阱」在九尺系列中的佔比 ★
+        // 總共九尺佔 35% (0.3~0.65)，現在讓陷阱佔 31%，標準題只佔 4%
         let r = Math.random();
         let typeCategory = '';
         if (r < 0.20) typeCategory = '五尺折景簾'; // 20%
         else if (r < 0.30) typeCategory = '五尺蛇簾'; // 10%
-        else if (r < 0.40) typeCategory = '九尺折景簾_標準'; // 10%
-        else if (r < 0.50) typeCategory = '九尺蛇簾_標準'; // 10%
-        else if (r < 0.65) typeCategory = '九尺高度陷阱'; // 15%
+        else if (r < 0.32) typeCategory = '九尺折景簾_標準'; // 2%
+        else if (r < 0.34) typeCategory = '九尺蛇簾_標準'; // 2%
+        else if (r < 0.65) typeCategory = '九尺高度陷阱'; // 31% (確保九尺題目有超過 90% 都是陷阱)
         else if (r < 0.80) typeCategory = '九呎布橫車'; // 15%
         else typeCategory = '其他'; // 20%
 
         let type = '';
         const w_cm = Math.floor(Math.random() * (380 - 60 + 1)) + 60;
         let h_cm = Math.floor(Math.random() * (265 - 90 + 1)) + 90;
+        
+        let fabric_roll_h_cm = 0;
 
         if (typeCategory === '五尺折景簾') {
             type = '五尺折景簾';
@@ -406,15 +405,21 @@
             type = '五尺蛇簾';
         } else if (typeCategory === '九尺折景簾_標準') {
             type = '九尺折景簾';
-            h_cm = Math.floor(Math.random() * (250 - 90 + 1)) + 90; // 強制 <= 250
+            fabric_roll_h_cm = getRandomItem([280, 290, 300, 310, 320, 330, 340]);
+            h_cm = Math.floor(Math.random() * ((fabric_roll_h_cm - 31) - 90 + 1)) + 90; // 無陷阱
         } else if (typeCategory === '九尺蛇簾_標準') {
             type = '九尺蛇簾';
-            h_cm = Math.floor(Math.random() * (250 - 90 + 1)) + 90; // 強制 <= 250
+            fabric_roll_h_cm = getRandomItem([280, 290, 300, 310, 320, 330, 340]);
+            h_cm = Math.floor(Math.random() * ((fabric_roll_h_cm - 31) - 90 + 1)) + 90; // 無陷阱
         } else if (typeCategory === '九尺高度陷阱') {
             type = getRandomItem(['九尺折景簾', '九尺蛇簾']);
-            h_cm = Math.floor(Math.random() * (320 - 251 + 1)) + 251; // 強制 > 250，觸發陷阱
+            fabric_roll_h_cm = getRandomItem([280, 290, 300, 310, 320, 330, 340]);
+            // 觸發陷阱：高度介於 (布高-29) 到 布高 之間
+            h_cm = Math.floor(Math.random() * (fabric_roll_h_cm - (fabric_roll_h_cm - 29) + 1)) + (fabric_roll_h_cm - 29);
         } else if (typeCategory === '九呎布橫車') {
             type = getRandomItem(['九呎布橫車折景簾', '九呎布橫車蛇簾']);
+            fabric_roll_h_cm = getRandomItem([280, 290, 300, 310, 320]);
+            h_cm = Math.floor(Math.random() * (fabric_roll_h_cm - 90 + 1)) + 90; // 防呆確保不超過布高
         } else {
             const areaTypes = ['捲簾', '調光簾', '木百葉', '風琴簾', '穿透簾', '拉門'];
             type = getRandomItem(areaTypes);
@@ -428,10 +433,8 @@
         let unitPrice = 0;
         let trackPrice = 0;
         let multi = 0;
-        let fabric_roll_h_cm = 0;
 
-        // 若為橫車，隨機給定布料高度
-        if (type.includes('橫車')) {
+        if (type.includes('橫車') && fabric_roll_h_cm === 0) {
             fabric_roll_h_cm = getRandomItem([280, 290, 300, 310, 320]);
         }
 
@@ -457,9 +460,8 @@
         let processText = "";
         let qText = "";
 
-        // 整理畫面顯示的產品名稱
-        let displayType = type.includes('橫車') ? `${type} <span style="color:#ef4444; font-size:22px;">(布高: ${fabric_roll_h_cm}cm)</span>` : type;
-        let rawType = type.includes('橫車') ? `${type} (布高: ${fabric_roll_h_cm}cm)` : type;
+        let displayType = (type.includes('橫車') || type.includes('九尺')) ? `${type} <span style="color:#ef4444; font-size:22px;">(布高: ${fabric_roll_h_cm}cm)</span>` : type;
+        let rawType = (type.includes('橫車') || type.includes('九尺')) ? `${type} (布高: ${fabric_roll_h_cm}cm)` : type;
 
         if (isCmUnit) {
             processText = `【尺寸轉換】\n寬: ${w_cm}cm ➔ ${w_ft}尺\n高: ${h_cm}cm ➔ ${h_ft}尺\n\n`;
@@ -499,7 +501,6 @@
                 total = totalFabPrice + totalTrack;
                 processText += `【布料(五尺)】\n幅: (${w_ft}×${multi})÷5 ➔ ${panels}幅\n高: ${Math.ceil(h_ft)}+1 = ${h_fab}尺\n總尺: ${panels}×${h_fab} = ${totalFab}尺\n價: ${totalFab} × ${unitPrice} = ${totalFabPrice}元\n總價: 布${totalFabPrice} + 軌${totalTrack} = ${total}元`;
             } else if (type.includes('橫車')) {
-                // 橫車專屬邏輯：(寬cm * 倍數) / 布高cm
                 let panels = Math.ceil((w_cm * multi) / fabric_roll_h_cm);
                 let h_fab = Math.ceil(h_ft) + 1;
                 let totalFab = Math.ceil(panels * h_fab);
@@ -509,12 +510,25 @@
                 let widthHint = isCmUnit ? w_cm : `${w_ft}尺➔${w_cm}cm`;
                 processText += `【布料(橫車)】\n幅: (${widthHint} × ${multi}) ÷ ${fabric_roll_h_cm}(布高) ➔ 進位 ${panels}幅\n高: ${Math.ceil(h_ft)}+1(損耗) = ${h_fab}尺\n總尺: ${panels}×${h_fab} = ${totalFab}尺\n價: ${totalFab} × ${unitPrice} = ${totalFabPrice}元\n總價: 布${totalFabPrice} + 軌${totalTrack} = ${total}元`;
             } else if (type.includes('九尺')) {
-                let totalFab = Math.ceil(w_ft * multi);
-                let effectivePrice = (h_cm > 250) ? unitPrice + 30 : unitPrice;
+                let effectiveMulti = multi;
+                let effectivePrice = unitPrice;
+                let h_warning = "";
+
+                if (h_cm > (fabric_roll_h_cm - 15)) {
+                    effectiveMulti = Math.round((multi + 0.2) * 10) / 10; 
+                    effectivePrice += 30;
+                    h_warning = `⚠️高>${fabric_roll_h_cm - 15}cm➔單價+30,倍數+0.2(${effectiveMulti}倍)\n`;
+                } else if (h_cm > (fabric_roll_h_cm - 30)) {
+                    effectivePrice += 30;
+                    h_warning = `⚠️高>${fabric_roll_h_cm - 30}cm➔單價+30\n`;
+                } else {
+                    h_warning = `單價: ${effectivePrice}\n`;
+                }
+
+                let totalFab = Math.ceil(w_ft * effectiveMulti);
                 let totalFabPrice = totalFab * effectivePrice;
                 total = totalFabPrice + totalTrack;
-                let h_warning = (h_cm > 250) ? `⚠️高>250cm加價➔單價${effectivePrice}\n` : `單價: ${effectivePrice}\n`;
-                processText += `【布料(九尺)】\n尺數: ${w_ft}×${multi} ➔ ${totalFab}尺\n${h_warning}價: ${totalFab} × ${effectivePrice} = ${totalFabPrice}元\n總價: 布${totalFabPrice} + 軌${totalTrack} = ${total}元`;
+                processText += `【布料(九尺)】\n尺數: ${w_ft}×${effectiveMulti} ➔ ${totalFab}尺\n${h_warning}價: ${totalFab} × ${effectivePrice} = ${totalFabPrice}元\n總價: 布${totalFabPrice} + 軌${totalTrack} = ${total}元`;
             }
         }
 
