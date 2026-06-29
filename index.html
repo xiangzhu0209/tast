@@ -379,13 +379,10 @@
               }
               querySnapshot.forEach((doc) => {
                   const data = doc.data();
-                  // 處理時間顯示
                   const date = data.submitTime ? data.submitTime.toDate().toLocaleString('zh-TW', { month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit' }) : "未知時間";
                   
-                  // 判斷分數顏色
                   const scoreColor = data.accuracy >= 90 ? '#10b981' : (data.accuracy >= 60 ? '#f59e0b' : '#ef4444');
                   
-                  // 組裝錯題明細 HTML (加入題目細節與千分位格式化)
                   let wrongHtml = "";
                   if (data.wrongDetails && data.wrongDetails.length > 0) {
                       wrongHtml = `<div style="margin-top:10px; padding:10px; background:#fee2e2; border-radius:8px; font-size:14px; border: 1px solid #fecaca;">`;
@@ -568,6 +565,12 @@
         let unitPrice = 0;
         let trackPrice = 0;
         let multi = 0;
+        
+        // 判斷是否需要加鉛條 (限定五尺與橫車)
+        let isLeadHem = false;
+        if (type.includes('五尺') || type.includes('橫車')) {
+            isLeadHem = Math.random() < 0.6; // 40% 機率出加鉛條考題
+        }
 
         if (type.includes('橫車') && fabric_roll_h_cm === 0) {
             fabric_roll_h_cm = getRandomItem([280, 290, 300, 310, 320]);
@@ -597,6 +600,11 @@
 
         let displayType = (type.includes('橫車') || type.includes('九尺')) ? `${type} <span style="color:#ef4444; font-size:22px;">(布高: ${fabric_roll_h_cm}cm)</span>` : type;
         let rawType = (type.includes('橫車') || type.includes('九尺')) ? `${type} (布高: ${fabric_roll_h_cm}cm)` : type;
+        
+        if (isLeadHem) {
+            displayType += ` <span style="color:#8b5cf6; font-weight:bold;">[需加鉛條]</span>`;
+            rawType += ` [+加鉛條]`;
+        }
 
         if (isCmUnit) {
             processText = `【尺寸轉換】\n寬: ${w_cm}cm ➔ ${w_ft}尺\n高: ${h_cm}cm ➔ ${h_ft}尺\n\n`;
@@ -633,25 +641,45 @@
                 let h_fab = Math.ceil(h_ft) + 1;
                 let totalFab = Math.ceil(panels * h_fab);
                 let totalFabPrice = totalFab * unitPrice;
-                total = totalFabPrice + totalTrack;
-                processText += `【布料(五尺)】\n幅: (${w_ft}×${multi})÷5 ➔ ${panels}幅\n高: ${Math.ceil(h_ft)}+1 = ${h_fab}尺\n總尺: ${panels}×${h_fab} = ${totalFab}尺\n價: ${totalFab} × ${unitPrice} = ${totalFabPrice}元\n總價: 布${totalFabPrice} + 軌${totalTrack} = ${total}元`;
+                
+                let leadHemPrice = 0;
+                let leadText = "";
+                if (isLeadHem) {
+                    let lead_ft = Math.ceil(w_ft * multi);
+                    leadHemPrice = lead_ft * 30;
+                    leadText = `\n【鉛條】${w_ft}尺×${multi}➔進位${lead_ft}尺 × 30 = ${leadHemPrice}元`;
+                }
+
+                total = totalFabPrice + totalTrack + leadHemPrice;
+                processText += `【布料(五尺)】\n幅: (${w_ft}×${multi})÷5 ➔ ${panels}幅\n高: ${Math.ceil(h_ft)}+1 = ${h_fab}尺\n總尺: ${panels}×${h_fab} = ${totalFab}尺\n價: ${totalFab} × ${unitPrice} = ${totalFabPrice}元${leadText}\n總價: 布${totalFabPrice} + 軌${totalTrack}${isLeadHem?` + 鉛${leadHemPrice}`:''} = ${total}元`;
             } else if (type.includes('橫車')) {
                 let panels = Math.ceil((w_cm * multi) / fabric_roll_h_cm);
                 let h_fab = Math.ceil(h_ft) + 1;
                 let totalFab = Math.ceil(panels * h_fab);
                 let totalFabPrice = totalFab * unitPrice;
-                total = totalFabPrice + totalTrack;
+                
+                let leadHemPrice = 0;
+                let leadText = "";
+                if (isLeadHem) {
+                    let lead_ft = Math.ceil(w_ft * multi);
+                    leadHemPrice = lead_ft * 30;
+                    leadText = `\n【鉛條】${w_ft}尺×${multi}➔進位${lead_ft}尺 × 30 = ${leadHemPrice}元`;
+                }
+
+                total = totalFabPrice + totalTrack + leadHemPrice;
                 let widthHint = isCmUnit ? w_cm : `${w_ft}尺➔${w_cm}cm`;
-                processText += `【布料(橫車)】\n幅: (${widthHint} × ${multi}) ÷ ${fabric_roll_h_cm}(布高) ➔ 進位 ${panels}幅\n高: ${Math.ceil(h_ft)}+1(損耗) = ${h_fab}尺\n總尺: ${panels}×${h_fab} = ${totalFab}尺\n價: ${totalFab} × ${unitPrice} = ${totalFabPrice}元\n總價: 布${totalFabPrice} + 軌${totalTrack} = ${total}元`;
+                processText += `【布料(橫車)】\n幅: (${widthHint} × ${multi}) ÷ ${fabric_roll_h_cm}(布高) ➔ 進位 ${panels}幅\n高: ${Math.ceil(h_ft)}+1(損耗) = ${h_fab}尺\n總尺: ${panels}×${h_fab} = ${totalFab}尺\n價: ${totalFab} × ${unitPrice} = ${totalFabPrice}元${leadText}\n總價: 布${totalFabPrice} + 軌${totalTrack}${isLeadHem?` + 鉛${leadHemPrice}`:''} = ${total}元`;
             } else if (type.includes('九尺')) {
                 let effectiveMulti = multi;
                 let effectivePrice = unitPrice;
                 let h_warning = "";
 
+                // 九尺高度陷阱判斷 (蛇簾倍數+0.3，折景+0.2)
                 if (h_cm > (fabric_roll_h_cm - 15)) {
-                    effectiveMulti = Math.round((multi + 0.2) * 10) / 10; 
+                    let addMulti = type.includes('蛇簾') ? 0.3 : 0.2;
+                    effectiveMulti = Math.round((multi + addMulti) * 10) / 10; 
                     effectivePrice += 30;
-                    h_warning = `⚠️高>${fabric_roll_h_cm - 15}cm➔單價+30,倍數+0.2(${effectiveMulti}倍)\n`;
+                    h_warning = `⚠️高>${fabric_roll_h_cm - 15}cm➔單價+30,倍數+${addMulti}(${effectiveMulti}倍)\n`;
                 } else if (h_cm > (fabric_roll_h_cm - 30)) {
                     effectivePrice += 30;
                     h_warning = `⚠️高>${fabric_roll_h_cm - 30}cm➔單價+30\n`;
